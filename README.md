@@ -1,49 +1,30 @@
-# Project tubes2-be-mccf
+# Wikirace
 
-One Paragraph of project description goes here
+## How To Run
 
-## Getting Started
+1. Make sure Docker Desktop is running
 
-These instructions will get you a copy of the project up and running on your local machine for development and testing purposes. See deployment for notes on how to deploy the project on a live system.
+2. For development (with hot reload), run
 
-## MakeFile
-
-run all make commands with clean tests
 ```bash
-make all build
+docker compose -f "docker-compose.development.yml" up --build
 ```
 
-build the application
+3. For production, run
+
 ```bash
-make build
+docker compose -f "docker-compose.production.yml" up --build
 ```
 
-run the application
+4. Visit [http://localhost:8080](http://localhost:8080)
+5. To stop the process, find the container id
+
 ```bash
-make run
+docker ps
 ```
 
-Create DB container
-```bash
-make docker-run
-```
+6. Stop the process
 
-Shutdown DB container
 ```bash
-make docker-down
-```
-
-live reload the application
-```bash
-make watch
-```
-
-run the test suite
-```bash
-make test
-```
-
-clean up binary from the last build
-```bash
-make clean
+docker stop <container_id>
 ```
