@@ -5,7 +5,10 @@ services:
       context: .
       target: dev
     ports:
-      - 8080:8080
+      - ${PORT}:${PORT}
     # Important to bind/mount your codebase dir to /app dir for live reload
     volumes:
       - ./:/app
+    environment:
+      - PORT=${PORT}
+      - APP_ENV=${APP_ENV}
