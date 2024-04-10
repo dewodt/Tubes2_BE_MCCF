@@ -1,6 +1,7 @@
 version: "3.8"
 services:
   backend:
+    container_name: backend_development
     build:
       context: .
       target: dev
