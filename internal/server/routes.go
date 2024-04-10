@@ -2,21 +2,15 @@ package server
 
 import (
 	"net/http"
+	"tubes2-be-mccf/internal/controllers"
 
 	"github.com/gin-gonic/gin"
 )
 
-func (s *Server) RegisterRoutes() http.Handler {
+func RegisterRoutes() http.Handler {
 	r := gin.Default()
 
-	r.GET("/", s.HelloWorldHandler)
+	r.POST("/play", controllers.PlayHandler)
 
 	return r
-}
-
-func (s *Server) HelloWorldHandler(c *gin.Context) {
-	resp := make(map[string]string)
-	resp["message"] = "Hello World"
-
-	c.JSON(http.StatusOK, resp)
 }
