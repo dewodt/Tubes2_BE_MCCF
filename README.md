@@ -6,14 +6,30 @@
 
 2. For development (with hot reload), run
 
+- Build docker image
+
 ```bash
-docker compose -f "docker-compose.development.yml" up --build
+docker compose -f "docker-compose.development.yml" build
+```
+
+- Run docker container
+
+```bash
+docker compose -f "docker-compose.development.yml" up
 ```
 
 3. For production, run
 
+- Build docker image
+
 ```bash
-docker compose -f "docker-compose.production.yml" up --build
+docker compose -f "docker-compose.production.yml" build
+```
+
+- Run docker container
+
+```bash
+docker compose -f "docker-compose.production.yml" up
 ```
 
 4. Visit [http://localhost:8080](http://localhost:8080)
