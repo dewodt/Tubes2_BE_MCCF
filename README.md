@@ -6,7 +6,7 @@
 
 2. For development (with hot reload), run
 
-- Build docker image
+- Build docker image (once)
 
 ```bash
 docker compose -f "docker-compose.development.yml" build
@@ -20,7 +20,7 @@ docker compose -f "docker-compose.development.yml" up
 
 3. For production, run
 
-- Build docker image
+- Build docker image (once)
 
 ```bash
 docker compose -f "docker-compose.production.yml" build
