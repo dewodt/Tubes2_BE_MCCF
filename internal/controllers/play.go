@@ -1,19 +1,64 @@
 package controllers
 
 import (
+	"encoding/json"
+	"errors"
 	"fmt"
+	"math"
 	"net/http"
+	"net/url"
+	"strings"
 	"tubes2-be-mccf/internal/models"
 	"tubes2-be-mccf/internal/utils"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gocolly/colly/v2"
-	"encoding/json"
-	"net/url"
-	"strings"
-	
 )
+ 
+  
 
+  
+type Queue struct { 
+    Elements []string
+    Size     int 
+} 
+  
+func (q *Queue) Enqueue(elem string) { 
+    if q.GetLength() == q.Size { 
+        fmt.Println("Overflow") 
+        return
+    } 
+    q.Elements = append(q.Elements, elem) 
+} 
+  
+func (q *Queue) Dequeue() int { 
+    if q.IsEmpty() { 
+        fmt.Println("UnderFlow") 
+        return 0
+    } 
+    element := q.Elements[0] 
+    if q.GetLength() == 1 { 
+        q.Elements = nil 
+        return element 
+    } 
+    q.Elements = q.Elements[1:] 
+    return element // Slice off the element once it is dequeued. 
+} 
+  
+func (q *Queue) GetLength() int { 
+    return len(q.Elements) 
+} 
+  
+func (q *Queue) IsEmpty() bool { 
+    return len(q.Elements) == 0
+} 
+  
+func (q *Queue) Peek() (string, error) { 
+    if q.IsEmpty() { 
+        return 0, errors.New("empty queue") 
+    } 
+    return q.Elements[0], nil 
+} 
 // Result Request Data Structure
 type PlayRequest struct {
 	Algorithm string `form:"algorithm" binding:"required,oneof='IDS' 'BFS'"` // Algorithm type (IDS or BFS)
@@ -163,14 +208,46 @@ func SolveIDS(startURL string, targetURL string) (PlaySuccessResponse, error) {
 	// Placeholder
 	return PlaySuccessResponse{}, nil
 }
+func print_path(paths [][]int, path []int,parent [][]int,start int,end int){
 
+}
 func solveBFS(startURL string, targetURL string) (PlaySuccessResponse, error) {
 	fmt.Println("Solving with BFS")
 	fmt.Println("Start URL:", startURL)
 	fmt.Println("Target URL:", targetURL)
+	// var adj [][]int
+	adj := make(map[string][]string)
+	parent := make(map[string][]string)
+	maxInt :=math.MaxInt32
+	q:= Queue{Size: 0}
+	dist:=make(map[string]int)
+	dist[startURL] = 0
+	//making bfs tree
+	for !q.IsEmpty(){
+		u,er:=q.Peek()
+	
+		q.Dequeue()
+		links := getAllInternalLinks(startURL)
+		for i:=0;i<len(links);i++{
+			adj[u]=append(adj[u], links[i])
+		}
+		for i:=0;i<len(links);i++{
+			if(dist[adj[u][i]]>dist[u]+1){
+				dist[adj[u][i]] = dist[u]+1
+				q.Enqueue(adj[u][i])
+				//parent[adj[u][i]].clear(),push_back
+			}else if(dist[adj[u][i]]==dist[u]+1){
+				//parent[adj[u][i]].pushback
+			}
+		}
 
-	links := getAllInternalLinks(startURL)
-	utils.PrintArrayString(links)
+		
+	}
+
+
+
+	
+	
 
 	// Placeholder
 	return PlaySuccessResponse{}, nil
