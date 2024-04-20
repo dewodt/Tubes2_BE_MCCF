@@ -3,6 +3,8 @@ package controllers
 import (
 	"fmt"
 	"net/http"
+	"os"
+	"sync"
 	"tubes2-be-mccf/internal/models"
 	"tubes2-be-mccf/internal/utils"
 
@@ -36,6 +38,8 @@ type PlayErrorResponse struct {
 	Message string `json:"message"` // Error message
 }
 
+const maxConcurrent = 50
+
 type BacklinkResponse struct {
 	BatchComplete string `json:"batchcomplete"`
 	Continue      struct {
@@ -49,6 +53,10 @@ type BacklinkResponse struct {
 			Title  string `json:"title"`
 		} `json:"backlinks"`
 	} `json:"query"`
+}
+
+type goRoutineManager struct {
+	goRoutineCnt chan bool
 }
 
 // Get all backlinks from a wikipedia URL.
@@ -158,7 +166,13 @@ func getAllInternalLinks(url string) []string {
 
 	// Visit the URL
 
-	cl.Visit(url)
+	err := cl.Visit(url)
+	if err != nil {
+		fmt.Println("error visit")
+		os.Exit(1)
+
+	}
+	// check if error
 
 	result := make([]string, 0, len(links))
 	for link := range links {
@@ -169,78 +183,99 @@ func getAllInternalLinks(url string) []string {
 }
 
 func printResultpath(resultPath [][]string) {
-	for _, path := range resultPath {
+	fmt.Println("Found", len(resultPath), "paths : ")
+	for i, path := range resultPath {
+		fmt.Print("Path ", i+1, " : ")
 		fmt.Println(path)
+	}
+}
+
+func (g *goRoutineManager) Run(f func()) {
+	select {
+	case g.goRoutineCnt <- true:
+		go func() {
+			f()
+			<-g.goRoutineCnt
+		}()
+	default:
+		f()
+	}
+}
+
+func NewGoRoutineManager(goRoutineLimit int) *goRoutineManager {
+	return &goRoutineManager{
+		goRoutineCnt: make(chan bool, goRoutineLimit),
 	}
 }
 
 func IDS(startURL string, targetURL string) [][]string {
 	resultPath := make([][]string, 0)
 	path := make([]string, 0)
-	cache:= make(map[string][]string)
-	// visited := make(map[string]bool)
+	cache := make(map[string][]string)
+	mu := sync.Mutex{}
 	depth := 1
+	gm := NewGoRoutineManager(maxConcurrent)
 	for {
-		if DLS(startURL, targetURL, path, &resultPath, depth,&cache) {
+
+		DLS(startURL, targetURL, path, &resultPath, depth, &cache, gm, &mu)
+
+		if len(resultPath) > 0 {
 			fmt.Println("found")
-			// fmt.Println(len(path))
-			// fmt.Println(resultPath)
-			printResultpath(resultPath)
 			fmt.Println(len(resultPath))
-			// insert startURL at the start of path
+
 			for i := range resultPath {
 				resultPath[i] = append([]string{startURL}, resultPath[i]...)
-			} 
-			
+			}
+
 			return resultPath
+		}
+
+		path = path[:0]
+		if depth > 10 {
+			break
 		}
 		depth++
 	}
 	return nil
-	// }
-	// return path
 
 }
 
-func DLS(startURL string, targetURL string, path []string, resultpath *[][]string, depth int, cache *map[string][]string) bool {
-	
-
+func DLS(startURL string, targetURL string, path []string, resultpath *[][]string, depth int, cache *map[string][]string, gm *goRoutineManager, mu *sync.Mutex) {
 	if startURL == targetURL {
+		mu.Lock()
 		*resultpath = append(*resultpath, path)
-		return true
+		mu.Unlock()
+
+		return
 	}
 	if depth == 0 {
-		return false
+
+		return
 	}
 
-	
 	var links []string
-	
-	if(*cache)[startURL] == nil{
+
+	if (*cache)[startURL] == nil {
 		links = getAllInternalLinks(startURL)
+		mu.Lock()
 		(*cache)[startURL] = links
-	}else{
+		mu.Unlock()
+	} else {
 		links = (*cache)[startURL]
 	}
-	
+
 	fmt.Println("current processed : ", startURL)
 
 	fmt.Println("depth : ", depth)
-
-	
-	result := false
-	flag := false
 	for _, link := range links {
 		currpath := append(path, link)
-		result = DLS(link, targetURL, currpath, resultpath, depth-1, cache)
-		if result {
-			flag = true
-		}
-	}
-	return flag
-	// return false
-}
+		gm.Run(func() {
+			DLS(link, targetURL, currpath, resultpath, depth-1, cache, gm, mu)
+		})
 
+	}
+
+}
 
 func SolveIDS(startURL string, targetURL string) (PlaySuccessResponse, error) {
 	fmt.Println("Solving with IDS")
