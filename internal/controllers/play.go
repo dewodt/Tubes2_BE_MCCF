@@ -124,50 +124,77 @@ func getWikipediaURLFromTitle(title string) (string, error) {
 // Get all internal links from a wikipedia URL.
 //
 // Returns a list of internal links found in the given wikipedia URL (english only en.wikipedia.org).
+
 func getAllInternalLinks(url string) []string {
 	// Initialize result array
-	var links []string
+	// var links []string
+	links := make(map[string]bool)
 
+	// ext := []string{".jpg", ".jpeg", ".png", ".gif", ".svg"}
 	// Initialize colly collector
 	cl := colly.NewCollector()
 
 	// On HTML element a
-	cl.OnHTML("a[href]", func(e *colly.HTMLElement) {
+	cl.OnHTML("div#bodyContent a[href]", func(e *colly.HTMLElement) {
 		link := e.Attr("href")
+		// skip := false
+		// for _, ext := range ext {
+		// 	if strings.HasSuffix(link, ext) {
+		// 		skip = true
+		// 		break
+		// 	}
+		// }
 		// Check if the link is an internal link and correspond to a specific article
 		if len(link) > 6 && link[:6] == "/wiki/" {
-			links = append(links, "https://en.wikipedia.org"+link)
+
+			fullLink := "https://en.wikipedia.org" + link
+
+			// If the link is not in the map, add it
+			if _, ok := links[fullLink]; !ok {
+				links[fullLink] = true
+			}
 		}
 	})
 
 	// Visit the URL
+
 	cl.Visit(url)
 
-	return links
-}
+	result := make([]string, 0, len(links))
+	for link := range links {
+		result = append(result, link)
+	}
 
-func getPath(path map[string]string, startURL string, endURL string) []string {
-	result := []string{endURL}
-	current := endURL
-	for current != startURL {
-		current = path[current]
-		result = append(result, current)
-	}
-	// rever result
-	for i, j := 0, len(result)-1; i < j; i, j = i+1, j-1 {
-		result[i], result[j] = result[j], result[i]
-	}
 	return result
 }
 
-func IDS(startURL string, targetURL string) []string {
-	path :=make(map[string]string)
-	visited := make(map[string]bool)
-	// depth := 1
-	// for {
-	if DLS(startURL, targetURL, visited, path, 2) {
-		// fmt.Println("found")
-		return getPath(path, startURL, targetURL)
+func printResultpath(resultPath [][]string) {
+	for _, path := range resultPath {
+		fmt.Println(path)
+	}
+}
+
+func IDS(startURL string, targetURL string) [][]string {
+	resultPath := make([][]string, 0)
+	path := make([]string, 0)
+	cache:= make(map[string][]string)
+	// visited := make(map[string]bool)
+	depth := 1
+	for {
+		if DLS(startURL, targetURL, path, &resultPath, depth,&cache) {
+			fmt.Println("found")
+			// fmt.Println(len(path))
+			// fmt.Println(resultPath)
+			printResultpath(resultPath)
+			fmt.Println(len(resultPath))
+			// insert startURL at the start of path
+			for i := range resultPath {
+				resultPath[i] = append([]string{startURL}, resultPath[i]...)
+			} 
+			
+			return resultPath
+		}
+		depth++
 	}
 	return nil
 	// }
@@ -175,40 +202,45 @@ func IDS(startURL string, targetURL string) []string {
 
 }
 
-func DLS(startURL string, targetURL string, visited map[string]bool, path map[string]string, depth int) bool {
-	// Mark the current URL as visited
-	visited[startURL] = true
-
+func DLS(startURL string, targetURL string, path []string, resultpath *[][]string, depth int, cache *map[string][]string) bool {
+	
 
 	if startURL == targetURL {
+		*resultpath = append(*resultpath, path)
 		return true
 	}
 	if depth == 0 {
 		return false
 	}
-	// If the current URL is the target URL, return the path
 
-	// Get all internal links from the current URL
-	links := getAllInternalLinks(startURL)
-	fmt.Println("current processed : ", startURL)
-	for _, link := range links {
-		fmt.Println(link)
+	
+	var links []string
+	
+	if(*cache)[startURL] == nil{
+		links = getAllInternalLinks(startURL)
+		(*cache)[startURL] = links
+	}else{
+		links = (*cache)[startURL]
 	}
+	
+	fmt.Println("current processed : ", startURL)
+
 	fmt.Println("depth : ", depth)
 
-	// For each link, if it has not been visited, call DFS recursively
+	
+	result := false
+	flag := false
 	for _, link := range links {
-		if !visited[link] {
-			path[link] = startURL
-			result := DLS(link, targetURL, visited, path, depth-1)
-			if(result){
-				return true
-			}
+		currpath := append(path, link)
+		result = DLS(link, targetURL, currpath, resultpath, depth-1, cache)
+		if result {
+			flag = true
 		}
 	}
-
-	return false
+	return flag
+	// return false
 }
+
 
 func SolveIDS(startURL string, targetURL string) (PlaySuccessResponse, error) {
 	fmt.Println("Solving with IDS")
@@ -277,13 +309,9 @@ func PlayHandler(c *gin.Context) {
 	c.JSON(200, result)
 }
 
-
-func main(){
+func main() {
 
 	// StartURL = "https://en.wikipedia.org/wiki/Computer_Science"
 	// EndURL = "https://en.wikipedia.org/wiki/Joko_Widodo"
-
-
-
 
 }
