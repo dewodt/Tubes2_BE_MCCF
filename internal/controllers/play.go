@@ -6,12 +6,12 @@ import (
 	"tubes2-be-mccf/internal/models"
 	"tubes2-be-mccf/internal/utils"
 
-	"github.com/gin-gonic/gin"
-	"github.com/gocolly/colly/v2"
 	"encoding/json"
 	"net/url"
 	"strings"
-	
+
+	"github.com/gin-gonic/gin"
+	"github.com/gocolly/colly/v2"
 )
 
 // Result Request Data Structure
@@ -36,8 +36,6 @@ type PlayErrorResponse struct {
 	Message string `json:"message"` // Error message
 }
 
-
-
 type BacklinkResponse struct {
 	BatchComplete string `json:"batchcomplete"`
 	Continue      struct {
@@ -55,51 +53,52 @@ type BacklinkResponse struct {
 
 // Get all backlinks from a wikipedia URL.
 
-func getBackLinkTitles(title string)[]string {
-    baseUrl := "https://en.wikipedia.org/w/api.php"
-    params := url.Values{
-        "action": {"query"},
-        "format": {"json"},
-        "list":   {"backlinks"},
-        "bltitle": {title},
-        "bllimit": {"max"},
-    }
+func getBackLinkTitles(title string) []string {
+	baseUrl := "https://en.wikipedia.org/w/api.php"
+	params := url.Values{
+		"action":  {"query"},
+		"format":  {"json"},
+		"list":    {"backlinks"},
+		"bltitle": {title},
+		"bllimit": {"max"},
+	}
 	// create array of string
 	var backlinks []string
 
-    count := 0
-    for {
-        resp, err := http.Get(baseUrl + "?" + params.Encode())
-        if err != nil {
-            panic(err)
-        }
+	count := 0
+	for {
+		resp, err := http.Get(baseUrl + "?" + params.Encode())
+		if err != nil {
+			panic(err)
+		}
 
-        var response BacklinkResponse
-        err = json.NewDecoder(resp.Body).Decode(&response)
-        if err != nil {
-            panic(err)
-        }
-        resp.Body.Close()
+		var response BacklinkResponse
+		err = json.NewDecoder(resp.Body).Decode(&response)
+		if err != nil {
+			panic(err)
+		}
+		resp.Body.Close()
 
-        for _, backlink := range response.Query.Backlinks {
-            // fmt.Println(backlink.Title)
+		for _, backlink := range response.Query.Backlinks {
+			// fmt.Println(backlink.Title)
 			// backlinks = append(backlinks, backlink.Title)
 			title := strings.ReplaceAll(backlink.Title, " ", "_")
 			title = "https://en.wikipedia.org/wiki/" + title
-    		backlinks = append(backlinks, title)
-            count++
-        }
+			backlinks = append(backlinks, title)
+			count++
+		}
 
-        if response.Continue.BlContinue != "" {
-            params.Set("blcontinue", response.Continue.BlContinue)
-        } else {
-            break
-        }
-    }
+		if response.Continue.BlContinue != "" {
+			params.Set("blcontinue", response.Continue.BlContinue)
+		} else {
+			break
+		}
+	}
 
-    // fmt.Println(count)
+	// fmt.Println(count)
 	return backlinks
 }
+
 // Get Wikipedia URL from title.
 //
 // Returns the wikipedia URL of the article with the given title.
@@ -145,6 +144,70 @@ func getAllInternalLinks(url string) []string {
 	cl.Visit(url)
 
 	return links
+}
+
+func getPath(path map[string]string, startURL string, endURL string) []string {
+	result := []string{endURL}
+	current := endURL
+	for current != startURL {
+		current = path[current]
+		result = append(result, current)
+	}
+	// rever result
+	for i, j := 0, len(result)-1; i < j; i, j = i+1, j-1 {
+		result[i], result[j] = result[j], result[i]
+	}
+	return result
+}
+
+func IDS(startURL string, targetURL string) []string {
+	path :=make(map[string]string)
+	visited := make(map[string]bool)
+	// depth := 1
+	// for {
+	if DLS(startURL, targetURL, visited, path, 2) {
+		// fmt.Println("found")
+		return getPath(path, startURL, targetURL)
+	}
+	return nil
+	// }
+	// return path
+
+}
+
+func DLS(startURL string, targetURL string, visited map[string]bool, path map[string]string, depth int) bool {
+	// Mark the current URL as visited
+	visited[startURL] = true
+
+
+	if startURL == targetURL {
+		return true
+	}
+	if depth == 0 {
+		return false
+	}
+	// If the current URL is the target URL, return the path
+
+	// Get all internal links from the current URL
+	links := getAllInternalLinks(startURL)
+	fmt.Println("current processed : ", startURL)
+	for _, link := range links {
+		fmt.Println(link)
+	}
+	fmt.Println("depth : ", depth)
+
+	// For each link, if it has not been visited, call DFS recursively
+	for _, link := range links {
+		if !visited[link] {
+			path[link] = startURL
+			result := DLS(link, targetURL, visited, path, depth-1)
+			if(result){
+				return true
+			}
+		}
+	}
+
+	return false
 }
 
 func SolveIDS(startURL string, targetURL string) (PlaySuccessResponse, error) {
@@ -212,4 +275,15 @@ func PlayHandler(c *gin.Context) {
 
 	// Return the result
 	c.JSON(200, result)
+}
+
+
+func main(){
+
+	// StartURL = "https://en.wikipedia.org/wiki/Computer_Science"
+	// EndURL = "https://en.wikipedia.org/wiki/Joko_Widodo"
+
+
+
+
 }
