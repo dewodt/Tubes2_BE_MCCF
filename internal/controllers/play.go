@@ -8,6 +8,10 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/gocolly/colly/v2"
+	"encoding/json"
+	"net/url"
+	"strings"
+	
 )
 
 // Result Request Data Structure
@@ -36,6 +40,69 @@ type PlayErrorResponse struct {
 	Error       string       `json:"error"`       // Error message
 	Message     string       `json:"message"`     // Error message
 	ErrorFields []FieldError `json:"errorFields"` // List of fields that caused the error
+}
+
+type BacklinkResponse struct {
+	BatchComplete string `json:"batchcomplete"`
+	Continue      struct {
+		BlContinue string `json:"blcontinue"`
+		Cont       string `json:"continue"`
+	} `json:"continue"`
+	Query struct {
+		Backlinks []struct {
+			PageId int    `json:"pageid"`
+			Ns     int    `json:"ns"`
+			Title  string `json:"title"`
+		} `json:"backlinks"`
+	} `json:"query"`
+}
+
+// Get all backlinks from a wikipedia URL.
+
+func getBackLinkTitles(title string)[]string {
+    baseUrl := "https://en.wikipedia.org/w/api.php"
+    params := url.Values{
+        "action": {"query"},
+        "format": {"json"},
+        "list":   {"backlinks"},
+        "bltitle": {title},
+        "bllimit": {"max"},
+    }
+	// create array of string
+	var backlinks []string
+
+    count := 0
+    for {
+        resp, err := http.Get(baseUrl + "?" + params.Encode())
+        if err != nil {
+            panic(err)
+        }
+
+        var response BacklinkResponse
+        err = json.NewDecoder(resp.Body).Decode(&response)
+        if err != nil {
+            panic(err)
+        }
+        resp.Body.Close()
+
+        for _, backlink := range response.Query.Backlinks {
+            // fmt.Println(backlink.Title)
+			// backlinks = append(backlinks, backlink.Title)
+			title := strings.ReplaceAll(backlink.Title, " ", "_")
+			title = "https://en.wikipedia.org/wiki/" + title
+    		backlinks = append(backlinks, title)
+            count++
+        }
+
+        if response.Continue.BlContinue != "" {
+            params.Set("blcontinue", response.Continue.BlContinue)
+        } else {
+            break
+        }
+    }
+
+    // fmt.Println(count)
+	return backlinks
 }
 
 // Get Wikipedia URL from title.
