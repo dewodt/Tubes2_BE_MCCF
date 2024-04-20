@@ -16,9 +16,9 @@ import (
 
 // Result Request Data Structure
 type PlayRequest struct {
-	Algorithm string `json:"algorithm" binding:"required,oneof='IDS' 'BFS'"` // Algorithm type (IDS or BFS)
-	Start     string `json:"start" binding:"required"`                       // Start wikipedia article title
-	Target    string `json:"target" binding:"required"`                      // Target wikipedia article title
+	Algorithm string `form:"algorithm" binding:"required,oneof='IDS' 'BFS'"` // Algorithm type (IDS or BFS)
+	Start     string `form:"start" binding:"required"`                       // Start wikipedia article title
+	Target    string `form:"target" binding:"required"`                      // Target wikipedia article title
 }
 
 // Result Response Data Structure
@@ -30,13 +30,17 @@ type PlaySuccessResponse struct {
 	Paths              []models.Path    `json:"paths"`              // List of the shortest paths from start to target found
 }
 
-// Error Response Data Structure
-type PlayErrorResponse struct {
+type FieldError struct {
 	Field   string `json:"field"`   // Form field that caused the error
 	Message string `json:"message"` // Error message
 }
 
-
+// Error Response Data Structure
+type PlayErrorResponse struct {
+	Error       string       `json:"error"`       // Error message
+	Message     string       `json:"message"`     // Error message
+	ErrorFields []FieldError `json:"errorFields"` // List of fields that caused the error
+}
 
 type BacklinkResponse struct {
 	BatchComplete string `json:"batchcomplete"`
@@ -100,6 +104,7 @@ func getBackLinkTitles(title string)[]string {
     // fmt.Println(count)
 	return backlinks
 }
+
 // Get Wikipedia URL from title.
 //
 // Returns the wikipedia URL of the article with the given title.
@@ -184,7 +189,7 @@ func PlayHandler(c *gin.Context) {
 	var reqJSON PlayRequest
 	err := c.ShouldBind(&reqJSON)
 	if err != nil {
-		c.JSON(400, gin.H{"error": err.Error()})
+		c.JSON(400, gin.H{"error": "Bad Request", "message": err.Error()})
 		return
 	}
 
@@ -196,18 +201,21 @@ func PlayHandler(c *gin.Context) {
 	// Get start wikipedia URL (and validate title)
 	startURL, err := getWikipediaURLFromTitle(startTitle)
 	if err != nil {
-		c.JSON(400, gin.H{"field": "start", "message": err.Error()})
+		c.JSON(400, gin.H{"error": "Bad Request", "message": "Wikipedia start article not found", "errorFields": []FieldError{{"start", "Wikipedia start article not found"}}})
+		return
 	}
 	// Get target wikipedia URL (and validate title)
 	targetURL, err := getWikipediaURLFromTitle(targetTitle)
 	if err != nil {
-		c.JSON(400, gin.H{"field": "target", "message": err.Error()})
+		c.JSON(400, gin.H{"error": "Bad Request", "message": "Wikipedia target article not found", "errorFields": []FieldError{{"target", "Wikipedia target article not found"}}})
+		return
 	}
 
 	// Solve
 	result, err := Solve(algorithm, startURL, targetURL)
 	if err != nil {
 		c.JSON(500, gin.H{"error": err.Error()})
+		return
 	}
 
 	// Return the result
