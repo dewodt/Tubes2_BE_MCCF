@@ -4,13 +4,11 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"strings"
 	"sync"
+	"time"
 	"tubes2-be-mccf/internal/models"
 	"tubes2-be-mccf/internal/utils"
-
-	"encoding/json"
-	"net/url"
-	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gocolly/colly/v2"
@@ -57,54 +55,6 @@ type BacklinkResponse struct {
 
 type goRoutineManager struct {
 	goRoutineCnt chan bool
-}
-
-// Get all backlinks from a wikipedia URL.
-
-func getBackLinkTitles(title string) []string {
-	baseUrl := "https://en.wikipedia.org/w/api.php"
-	params := url.Values{
-		"action":  {"query"},
-		"format":  {"json"},
-		"list":    {"backlinks"},
-		"bltitle": {title},
-		"bllimit": {"max"},
-	}
-	// create array of string
-	var backlinks []string
-
-	count := 0
-	for {
-		resp, err := http.Get(baseUrl + "?" + params.Encode())
-		if err != nil {
-			panic(err)
-		}
-
-		var response BacklinkResponse
-		err = json.NewDecoder(resp.Body).Decode(&response)
-		if err != nil {
-			panic(err)
-		}
-		resp.Body.Close()
-
-		for _, backlink := range response.Query.Backlinks {
-			// fmt.Println(backlink.Title)
-			// backlinks = append(backlinks, backlink.Title)
-			title := strings.ReplaceAll(backlink.Title, " ", "_")
-			title = "https://en.wikipedia.org/wiki/" + title
-			backlinks = append(backlinks, title)
-			count++
-		}
-
-		if response.Continue.BlContinue != "" {
-			params.Set("blcontinue", response.Continue.BlContinue)
-		} else {
-			break
-		}
-	}
-
-	// fmt.Println(count)
-	return backlinks
 }
 
 // Get Wikipedia URL from title.
@@ -208,7 +158,7 @@ func NewGoRoutineManager(goRoutineLimit int) *goRoutineManager {
 	}
 }
 
-func IDS(startURL string, targetURL string) [][]string {
+func IDS(startURL string, targetURL string) ([][]string, int) {
 	resultPath := make([][]string, 0)
 	path := make([]string, 0)
 	cache := make(map[string][]string)
@@ -216,8 +166,8 @@ func IDS(startURL string, targetURL string) [][]string {
 	depth := 1
 	gm := NewGoRoutineManager(maxConcurrent)
 	for {
-
-		DLS(startURL, targetURL, path, &resultPath, depth, &cache, gm, &mu)
+		totalTraversed := 0
+		DLS(startURL, targetURL, path, &resultPath, depth, &cache, gm, &mu, &totalTraversed)
 
 		if len(resultPath) > 0 {
 			fmt.Println("found")
@@ -227,7 +177,7 @@ func IDS(startURL string, targetURL string) [][]string {
 				resultPath[i] = append([]string{startURL}, resultPath[i]...)
 			}
 
-			return resultPath
+			return resultPath, totalTraversed
 		}
 
 		path = path[:0]
@@ -236,11 +186,12 @@ func IDS(startURL string, targetURL string) [][]string {
 		}
 		depth++
 	}
-	return nil
+	return nil, 0
 
 }
 
-func DLS(startURL string, targetURL string, path []string, resultpath *[][]string, depth int, cache *map[string][]string, gm *goRoutineManager, mu *sync.Mutex) {
+func DLS(startURL string, targetURL string, path []string, resultpath *[][]string, depth int, cache *map[string][]string, gm *goRoutineManager, mu *sync.Mutex, totalTraversed *int) {
+	(*totalTraversed)++
 	if startURL == targetURL {
 		mu.Lock()
 		*resultpath = append(*resultpath, path)
@@ -270,23 +221,100 @@ func DLS(startURL string, targetURL string, path []string, resultpath *[][]strin
 	for _, link := range links {
 		currpath := append(path, link)
 		gm.Run(func() {
-			DLS(link, targetURL, currpath, resultpath, depth-1, cache, gm, mu)
+			DLS(link, targetURL, currpath, resultpath, depth-1, cache, gm, mu, totalTraversed)
 		})
 
 	}
 
 }
 
+func getThumbnail(url string) string {
+	cl := colly.NewCollector()
+	var thumbnail string
+	var link string
+	cl.OnHTML("class#mw-file-description a[href]", func(e *colly.HTMLElement) {
+		thumbnail = e.Attr("href")
+		link = "https://en.wikipedia.org" + thumbnail
+	})
+	cl.Visit(url)
+	return link
+
+}
+
+func getTitleFromURL(url string) string {
+
+	title := url[30:]
+
+	title = strings.ReplaceAll(title, "_", " ")
+	return title
+}
+
+func getArticlesFromResultPath(path [][]string) []models.Article {
+	//
+	articleSet := make(map[string]bool)
+	articles := make([]models.Article, 0)
+
+	id := 0
+	for _, p := range path {
+
+		for _, link := range p {
+			if _, ok := articleSet[link]; !ok {
+				articleSet[link] = true
+				articles = append(articles, models.Article{
+					ID:          id,
+					Title:       getTitleFromURL(link),
+					Description: "",
+					Thumbnail:   getThumbnail(link),
+					URL:         link,
+				})
+				id++
+			}
+
+		}
+	}
+	return articles
+
+}
+
+func getPathsFromResultPath(path [][]string, articles []models.Article) []models.Path {
+	paths := make([]models.Path, 0)
+	for _, p := range path {
+		pathRes := make([]int, 0)
+		for _, link := range p {
+			for _, article := range articles {
+				if article.URL == link {
+					pathRes = append(pathRes, article.ID)
+					break
+				}
+			}
+		}
+		paths = append(paths, pathRes)
+	}
+	return paths
+}
+
 func SolveIDS(startURL string, targetURL string) (PlaySuccessResponse, error) {
 	fmt.Println("Solving with IDS")
 	fmt.Println("Start URL:", startURL)
 	fmt.Println("Target URL:", targetURL)
-
-	links := getAllInternalLinks(startURL)
-	utils.PrintArrayString(links)
+	startTime := time.Now()
+	resultPath, totalTraversed := IDS(startURL, targetURL)
+	elapseTime := time.Since(startTime).Seconds() * 1000
 
 	// Placeholder
-	return PlaySuccessResponse{}, nil
+	if len(resultPath) == 0 {
+		return PlaySuccessResponse{}, nil
+	} else {
+		articles := getArticlesFromResultPath(resultPath)
+		paths := getPathsFromResultPath(resultPath, articles)
+		return PlaySuccessResponse{
+			TotalTraversed:     totalTraversed,
+			ShortestPathLength: len(resultPath[0]),
+			Duration:           float32(elapseTime),
+			Articles:           articles,
+			Paths:              paths,
+		}, nil
+	}
 }
 
 func solveBFS(startURL string, targetURL string) (PlaySuccessResponse, error) {
@@ -342,11 +370,4 @@ func PlayHandler(c *gin.Context) {
 
 	// Return the result
 	c.JSON(200, result)
-}
-
-func main() {
-
-	// StartURL = "https://en.wikipedia.org/wiki/Computer_Science"
-	// EndURL = "https://en.wikipedia.org/wiki/Joko_Widodo"
-
 }
