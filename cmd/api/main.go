@@ -5,6 +5,7 @@ import (
 	"tubes2-be-mccf/internal/server"
 )
 
+
 func main() {
 
 	server := server.InitServer()
