@@ -31,10 +31,10 @@ func (q *Queue) Enqueue(elem string) {
     q.Elements = append(q.Elements, elem) 
 } 
   
-func (q *Queue) Dequeue() int { 
+func (q *Queue) Dequeue() string { 
     if q.IsEmpty() { 
         fmt.Println("UnderFlow") 
-        return 0
+        return ""
     } 
     element := q.Elements[0] 
     if q.GetLength() == 1 { 
@@ -55,7 +55,7 @@ func (q *Queue) IsEmpty() bool {
   
 func (q *Queue) Peek() (string, error) { 
     if q.IsEmpty() { 
-        return 0, errors.New("empty queue") 
+        return "", errors.New("empty queue") 
     } 
     return q.Elements[0], nil 
 } 
@@ -208,42 +208,78 @@ func SolveIDS(startURL string, targetURL string) (PlaySuccessResponse, error) {
 	// Placeholder
 	return PlaySuccessResponse{}, nil
 }
-func print_path(paths [][]int, path []int,parent [][]int,start int,end int){
-
+func dfs(paths [][]string, path []string,parent map[string][]string,end string){
+	if(parent[end]==nil){
+		path = append(path, end)
+		paths = append(paths, path)
+		path = path[:len(path)-1]
+	}else{
+		for i:=0;i<len(parent[end]);i++{
+			path = append(path, end)
+			dfs(paths,path,parent,parent[end][i])
+			path = path[:len(path)-1]
+		}
+	}
 }
 func solveBFS(startURL string, targetURL string) (PlaySuccessResponse, error) {
 	fmt.Println("Solving with BFS")
 	fmt.Println("Start URL:", startURL)
 	fmt.Println("Target URL:", targetURL)
 	// var adj [][]int
+	maxInt :=math.MaxInt32
 	adj := make(map[string][]string)
 	parent := make(map[string][]string)
-	maxInt :=math.MaxInt32
+	parent[startURL] = nil
 	q:= Queue{Size: 0}
 	dist:=make(map[string]int)
 	dist[startURL] = 0
+	dist[targetURL] = maxInt
 	//making bfs tree
 	for !q.IsEmpty(){
-		u,er:=q.Peek()
-	
+		u,err:=q.Peek()
+		if(err!= nil){
+			fmt.Println("Queue is empty")
+		}
 		q.Dequeue()
+		if(dist[u]>=dist[targetURL]){continue}
 		links := getAllInternalLinks(startURL)
 		for i:=0;i<len(links);i++{
 			adj[u]=append(adj[u], links[i])
+		}
+		for _, v := range links {
+			if(v!=startURL &&dist[v]==0){
+				dist[v] = maxInt
+			}
 		}
 		for i:=0;i<len(links);i++{
 			if(dist[adj[u][i]]>dist[u]+1){
 				dist[adj[u][i]] = dist[u]+1
 				q.Enqueue(adj[u][i])
 				//parent[adj[u][i]].clear(),push_back
+				parent[adj[u][i]] = nil
+				parent[adj[u][i]] = append(parent[adj[u][i]], u)
 			}else if(dist[adj[u][i]]==dist[u]+1){
 				//parent[adj[u][i]].pushback
+				parent[adj[u][i]] = append(parent[adj[u][i]], u)
 			}
 		}
-
-		
 	}
+	//change bfs tree to array of array of solution
+	var paths [][]string
+	var path []string
 
+	dfs(paths,path,parent,targetURL)
+
+
+	
+	
+
+
+
+
+
+
+	//fill solution type with solution
 
 
 	
