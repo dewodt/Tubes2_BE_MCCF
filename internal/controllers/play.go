@@ -1,7 +1,10 @@
 package controllers
 
 import (
+	"encoding/json"
+	"errors"
 	"fmt"
+	"math"
 	"net/http"
 	"os"
 	"strings"
@@ -13,12 +16,56 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/gocolly/colly/v2"
 )
+ 
+  
 
+  
+type Queue struct { 
+    Elements []string
+    Size     int 
+} 
+  
+func (q *Queue) Enqueue(elem string) { 
+    if q.GetLength() == q.Size { 
+        fmt.Println("Overflow") 
+        return
+    } 
+    q.Elements = append(q.Elements, elem) 
+} 
+  
+func (q *Queue) Dequeue() string { 
+    if q.IsEmpty() { 
+        fmt.Println("UnderFlow") 
+        return ""
+    } 
+    element := q.Elements[0] 
+    if q.GetLength() == 1 { 
+        q.Elements = nil 
+        return element 
+    } 
+    q.Elements = q.Elements[1:] 
+    return element // Slice off the element once it is dequeued. 
+} 
+  
+func (q *Queue) GetLength() int { 
+    return len(q.Elements) 
+} 
+  
+func (q *Queue) IsEmpty() bool { 
+    return len(q.Elements) == 0
+} 
+  
+func (q *Queue) Peek() (string, error) { 
+    if q.IsEmpty() { 
+        return "", errors.New("empty queue") 
+    } 
+    return q.Elements[0], nil 
+} 
 // Result Request Data Structure
 type PlayRequest struct {
-	Algorithm string `json:"algorithm" binding:"required,oneof='IDS' 'BFS'"` // Algorithm type (IDS or BFS)
-	Start     string `json:"start" binding:"required"`                       // Start wikipedia article title
-	Target    string `json:"target" binding:"required"`                      // Target wikipedia article title
+	Algorithm string `form:"algorithm" binding:"required,oneof='IDS' 'BFS'"` // Algorithm type (IDS or BFS)
+	Start     string `form:"start" binding:"required"`                       // Start wikipedia article title
+	Target    string `form:"target" binding:"required"`                      // Target wikipedia article title
 }
 
 // Result Response Data Structure
@@ -30,13 +77,21 @@ type PlaySuccessResponse struct {
 	Paths              []models.Path    `json:"paths"`              // List of the shortest paths from start to target found
 }
 
-// Error Response Data Structure
-type PlayErrorResponse struct {
+type FieldError struct {
 	Field   string `json:"field"`   // Form field that caused the error
 	Message string `json:"message"` // Error message
 }
 
+
 const maxConcurrent = 50
+
+// Error Response Data Structure
+type PlayErrorResponse struct {
+	Error       string       `json:"error"`       // Error message
+	Message     string       `json:"message"`     // Error message
+	ErrorFields []FieldError `json:"errorFields"` // List of fields that caused the error
+}
+
 
 type BacklinkResponse struct {
 	BatchComplete string `json:"batchcomplete"`
@@ -316,14 +371,82 @@ func SolveIDS(startURL string, targetURL string) (PlaySuccessResponse, error) {
 		}, nil
 	}
 }
-
+func dfs(paths [][]string, path []string,parent map[string][]string,end string){
+	if(parent[end]==nil){
+		path = append(path, end)
+		paths = append(paths, path)
+		path = path[:len(path)-1]
+	}else{
+		for i:=0;i<len(parent[end]);i++{
+			path = append(path, end)
+			dfs(paths,path,parent,parent[end][i])
+			path = path[:len(path)-1]
+		}
+	}
+}
 func solveBFS(startURL string, targetURL string) (PlaySuccessResponse, error) {
 	fmt.Println("Solving with BFS")
 	fmt.Println("Start URL:", startURL)
 	fmt.Println("Target URL:", targetURL)
+	// var adj [][]int
+	maxInt :=math.MaxInt32
+	adj := make(map[string][]string)
+	parent := make(map[string][]string)
+	parent[startURL] = nil
+	q:= Queue{Size: 0}
+	dist:=make(map[string]int)
+	dist[startURL] = 0
+	dist[targetURL] = maxInt
+	//making bfs tree
+	for !q.IsEmpty(){
+		u,err:=q.Peek()
+		if(err!= nil){
+			fmt.Println("Queue is empty")
+		}
+		q.Dequeue()
+		if(dist[u]>=dist[targetURL]){continue}
+		links := getAllInternalLinks(startURL)
+		for i:=0;i<len(links);i++{
+			adj[u]=append(adj[u], links[i])
+		}
+		for _, v := range links {
+			if(v!=startURL &&dist[v]==0){
+				dist[v] = maxInt
+			}
+		}
+		for i:=0;i<len(links);i++{
+			if(dist[adj[u][i]]>dist[u]+1){
+				dist[adj[u][i]] = dist[u]+1
+				q.Enqueue(adj[u][i])
+				//parent[adj[u][i]].clear(),push_back
+				parent[adj[u][i]] = nil
+				parent[adj[u][i]] = append(parent[adj[u][i]], u)
+			}else if(dist[adj[u][i]]==dist[u]+1){
+				//parent[adj[u][i]].pushback
+				parent[adj[u][i]] = append(parent[adj[u][i]], u)
+			}
+		}
+	}
+	//change bfs tree to array of array of solution
+	var paths [][]string
+	var path []string
 
-	links := getAllInternalLinks(startURL)
-	utils.PrintArrayString(links)
+	dfs(paths,path,parent,targetURL)
+
+
+	
+	
+
+
+
+
+
+
+	//fill solution type with solution
+
+
+	
+	
 
 	// Placeholder
 	return PlaySuccessResponse{}, nil
@@ -342,7 +465,7 @@ func PlayHandler(c *gin.Context) {
 	var reqJSON PlayRequest
 	err := c.ShouldBind(&reqJSON)
 	if err != nil {
-		c.JSON(400, gin.H{"error": err.Error()})
+		c.JSON(400, gin.H{"error": "Bad Request", "message": err.Error()})
 		return
 	}
 
@@ -354,18 +477,21 @@ func PlayHandler(c *gin.Context) {
 	// Get start wikipedia URL (and validate title)
 	startURL, err := getWikipediaURLFromTitle(startTitle)
 	if err != nil {
-		c.JSON(400, gin.H{"field": "start", "message": err.Error()})
+		c.JSON(400, gin.H{"error": "Bad Request", "message": "Wikipedia start article not found", "errorFields": []FieldError{{"start", "Wikipedia start article not found"}}})
+		return
 	}
 	// Get target wikipedia URL (and validate title)
 	targetURL, err := getWikipediaURLFromTitle(targetTitle)
 	if err != nil {
-		c.JSON(400, gin.H{"field": "target", "message": err.Error()})
+		c.JSON(400, gin.H{"error": "Bad Request", "message": "Wikipedia target article not found", "errorFields": []FieldError{{"target", "Wikipedia target article not found"}}})
+		return
 	}
 
 	// Solve
 	result, err := Solve(algorithm, startURL, targetURL)
 	if err != nil {
 		c.JSON(500, gin.H{"error": err.Error()})
+		return
 	}
 
 	// Return the result

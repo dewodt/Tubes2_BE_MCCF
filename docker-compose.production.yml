@@ -13,3 +13,4 @@ services:
     environment:
       - PORT=${PORT}
       - APP_ENV=${APP_ENV}
+      - FE_URL=${FE_URL}
