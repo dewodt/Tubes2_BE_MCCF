@@ -1,66 +1,62 @@
 package controllers
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"math"
 	"net/http"
 	"os"
 	"strings"
-	"sync"
+	"sync/atomic"
 	"time"
 	"tubes2-be-mccf/internal/models"
-	"tubes2-be-mccf/internal/utils"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gocolly/colly/v2"
 )
- 
-  
 
-  
-type Queue struct { 
-    Elements []string
-    Size     int 
-} 
-  
-func (q *Queue) Enqueue(elem string) { 
-    if q.GetLength() == q.Size { 
-        fmt.Println("Overflow") 
-        return
-    } 
-    q.Elements = append(q.Elements, elem) 
-} 
-  
-func (q *Queue) Dequeue() string { 
-    if q.IsEmpty() { 
-        fmt.Println("UnderFlow") 
-        return ""
-    } 
-    element := q.Elements[0] 
-    if q.GetLength() == 1 { 
-        q.Elements = nil 
-        return element 
-    } 
-    q.Elements = q.Elements[1:] 
-    return element // Slice off the element once it is dequeued. 
-} 
-  
-func (q *Queue) GetLength() int { 
-    return len(q.Elements) 
-} 
-  
-func (q *Queue) IsEmpty() bool { 
-    return len(q.Elements) == 0
-} 
-  
-func (q *Queue) Peek() (string, error) { 
-    if q.IsEmpty() { 
-        return "", errors.New("empty queue") 
-    } 
-    return q.Elements[0], nil 
-} 
+type Queue struct {
+	Elements []string
+	Size     int
+}
+
+func (q *Queue) Enqueue(elem string) {
+	if q.GetLength() == q.Size {
+		fmt.Println("Overflow")
+		return
+	}
+	q.Elements = append(q.Elements, elem)
+}
+
+func (q *Queue) Dequeue() string {
+	if q.IsEmpty() {
+		fmt.Println("UnderFlow")
+		return ""
+	}
+	element := q.Elements[0]
+	if q.GetLength() == 1 {
+		q.Elements = nil
+		return element
+	}
+	q.Elements = q.Elements[1:]
+	return element // Slice off the element once it is dequeued.
+}
+
+func (q *Queue) GetLength() int {
+	return len(q.Elements)
+}
+
+func (q *Queue) IsEmpty() bool {
+	return len(q.Elements) == 0
+}
+
+func (q *Queue) Peek() (string, error) {
+	if q.IsEmpty() {
+		return "", errors.New("empty queue")
+	}
+	return q.Elements[0], nil
+}
+
 // Result Request Data Structure
 type PlayRequest struct {
 	Algorithm string `form:"algorithm" binding:"required,oneof='IDS' 'BFS'"` // Algorithm type (IDS or BFS)
@@ -82,7 +78,6 @@ type FieldError struct {
 	Message string `json:"message"` // Error message
 }
 
-
 const maxConcurrent = 50
 
 // Error Response Data Structure
@@ -91,7 +86,6 @@ type PlayErrorResponse struct {
 	Message     string       `json:"message"`     // Error message
 	ErrorFields []FieldError `json:"errorFields"` // List of fields that caused the error
 }
-
 
 type BacklinkResponse struct {
 	BatchComplete string `json:"batchcomplete"`
@@ -148,7 +142,7 @@ func getAllInternalLinks(url string) []string {
 	cl := colly.NewCollector()
 
 	// On HTML element a
-	cl.OnHTML("div#bodyContent a[href]", func(e *colly.HTMLElement) {
+	cl.OnHTML("a[href]", func(e *colly.HTMLElement) {
 		link := e.Attr("href")
 		// skip := false
 		// for _, ext := range ext {
@@ -213,16 +207,17 @@ func NewGoRoutineManager(goRoutineLimit int) *goRoutineManager {
 	}
 }
 
-func IDS(startURL string, targetURL string) ([][]string, int) {
+func IDS(startURL string, targetURL string) ([][]string, int32) {
 	resultPath := make([][]string, 0)
 	path := make([]string, 0)
-	cache := make(map[string][]string)
-	mu := sync.Mutex{}
+	// cache := make(map[string][]string)
+	// mu := sync.Mutex{}
 	depth := 1
 	gm := NewGoRoutineManager(maxConcurrent)
+	var totalTraversed int32 = 0
 	for {
-		totalTraversed := 0
-		DLS(startURL, targetURL, path, &resultPath, depth, &cache, gm, &mu, &totalTraversed)
+
+		DLS(startURL, targetURL, path, &resultPath, depth, gm, &totalTraversed)
 
 		if len(resultPath) > 0 {
 			fmt.Println("found")
@@ -245,12 +240,12 @@ func IDS(startURL string, targetURL string) ([][]string, int) {
 
 }
 
-func DLS(startURL string, targetURL string, path []string, resultpath *[][]string, depth int, cache *map[string][]string, gm *goRoutineManager, mu *sync.Mutex, totalTraversed *int) {
-	(*totalTraversed)++
+func DLS(startURL string, targetURL string, path []string, resultpath *[][]string, depth int, gm *goRoutineManager, totalTraversed *int32) {
+	atomic.AddInt32(totalTraversed, 1)
 	if startURL == targetURL {
-		mu.Lock()
+		// mu.Lock()
 		*resultpath = append(*resultpath, path)
-		mu.Unlock()
+		// mu.Unlock()
 
 		return
 	}
@@ -259,24 +254,31 @@ func DLS(startURL string, targetURL string, path []string, resultpath *[][]strin
 		return
 	}
 
-	var links []string
+	// var links []string
 
-	if (*cache)[startURL] == nil {
-		links = getAllInternalLinks(startURL)
-		mu.Lock()
-		(*cache)[startURL] = links
-		mu.Unlock()
-	} else {
-		links = (*cache)[startURL]
-	}
+	// checks  := (*cache)[startURL] == nil
+
+	links := getAllInternalLinks(startURL)
+	// if (*cache)[startURL] == nil {
+	// 	mu.Lock()
+	// 	(*cache)[startURL] = links
+	// 	mu.Unlock()
+	// } else {
+	// 	mu.Lock()
+	// 	links = (*cache)[startURL]
+	// 	mu.Unlock()
+	// }
 
 	fmt.Println("current processed : ", startURL)
 
 	fmt.Println("depth : ", depth)
 	for _, link := range links {
 		currpath := append(path, link)
+
+		// capture the link so each goroutine is unique
+		link := link
 		gm.Run(func() {
-			DLS(link, targetURL, currpath, resultpath, depth-1, cache, gm, mu, totalTraversed)
+			DLS(link, targetURL, currpath, resultpath, depth-1, gm, totalTraversed)
 		})
 
 	}
@@ -354,6 +356,7 @@ func SolveIDS(startURL string, targetURL string) (PlaySuccessResponse, error) {
 	fmt.Println("Target URL:", targetURL)
 	startTime := time.Now()
 	resultPath, totalTraversed := IDS(startURL, targetURL)
+
 	elapseTime := time.Since(startTime).Seconds() * 1000
 
 	// Placeholder
@@ -363,7 +366,7 @@ func SolveIDS(startURL string, targetURL string) (PlaySuccessResponse, error) {
 		articles := getArticlesFromResultPath(resultPath)
 		paths := getPathsFromResultPath(resultPath, articles)
 		return PlaySuccessResponse{
-			TotalTraversed:     totalTraversed,
+			TotalTraversed:     int(totalTraversed),
 			ShortestPathLength: len(resultPath[0]),
 			Duration:           float32(elapseTime),
 			Articles:           articles,
@@ -371,15 +374,15 @@ func SolveIDS(startURL string, targetURL string) (PlaySuccessResponse, error) {
 		}, nil
 	}
 }
-func dfs(paths [][]string, path []string,parent map[string][]string,end string){
-	if(parent[end]==nil){
+func dfs(paths [][]string, path []string, parent map[string][]string, end string) {
+	if parent[end] == nil {
 		path = append(path, end)
 		paths = append(paths, path)
 		path = path[:len(path)-1]
-	}else{
-		for i:=0;i<len(parent[end]);i++{
+	} else {
+		for i := 0; i < len(parent[end]); i++ {
 			path = append(path, end)
-			dfs(paths,path,parent,parent[end][i])
+			dfs(paths, path, parent, parent[end][i])
 			path = path[:len(path)-1]
 		}
 	}
@@ -389,39 +392,41 @@ func solveBFS(startURL string, targetURL string) (PlaySuccessResponse, error) {
 	fmt.Println("Start URL:", startURL)
 	fmt.Println("Target URL:", targetURL)
 	// var adj [][]int
-	maxInt :=math.MaxInt32
+	maxInt := math.MaxInt32
 	adj := make(map[string][]string)
 	parent := make(map[string][]string)
 	parent[startURL] = nil
-	q:= Queue{Size: 0}
-	dist:=make(map[string]int)
+	q := Queue{Size: 0}
+	dist := make(map[string]int)
 	dist[startURL] = 0
 	dist[targetURL] = maxInt
 	//making bfs tree
-	for !q.IsEmpty(){
-		u,err:=q.Peek()
-		if(err!= nil){
+	for !q.IsEmpty() {
+		u, err := q.Peek()
+		if err != nil {
 			fmt.Println("Queue is empty")
 		}
 		q.Dequeue()
-		if(dist[u]>=dist[targetURL]){continue}
+		if dist[u] >= dist[targetURL] {
+			continue
+		}
 		links := getAllInternalLinks(startURL)
-		for i:=0;i<len(links);i++{
-			adj[u]=append(adj[u], links[i])
+		for i := 0; i < len(links); i++ {
+			adj[u] = append(adj[u], links[i])
 		}
 		for _, v := range links {
-			if(v!=startURL &&dist[v]==0){
+			if v != startURL && dist[v] == 0 {
 				dist[v] = maxInt
 			}
 		}
-		for i:=0;i<len(links);i++{
-			if(dist[adj[u][i]]>dist[u]+1){
-				dist[adj[u][i]] = dist[u]+1
+		for i := 0; i < len(links); i++ {
+			if dist[adj[u][i]] > dist[u]+1 {
+				dist[adj[u][i]] = dist[u] + 1
 				q.Enqueue(adj[u][i])
 				//parent[adj[u][i]].clear(),push_back
 				parent[adj[u][i]] = nil
 				parent[adj[u][i]] = append(parent[adj[u][i]], u)
-			}else if(dist[adj[u][i]]==dist[u]+1){
+			} else if dist[adj[u][i]] == dist[u]+1 {
 				//parent[adj[u][i]].pushback
 				parent[adj[u][i]] = append(parent[adj[u][i]], u)
 			}
@@ -431,22 +436,9 @@ func solveBFS(startURL string, targetURL string) (PlaySuccessResponse, error) {
 	var paths [][]string
 	var path []string
 
-	dfs(paths,path,parent,targetURL)
-
-
-	
-	
-
-
-
-
-
+	dfs(paths, path, parent, targetURL)
 
 	//fill solution type with solution
-
-
-	
-	
 
 	// Placeholder
 	return PlaySuccessResponse{}, nil
@@ -496,4 +488,8 @@ func PlayHandler(c *gin.Context) {
 
 	// Return the result
 	c.JSON(200, result)
+	// print the json
+	// fmt.Println(result)
+	fmt.Println(result.Articles)
+	fmt.Println(result.Paths)
 }
