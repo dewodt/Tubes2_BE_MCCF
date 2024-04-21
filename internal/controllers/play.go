@@ -78,7 +78,7 @@ type FieldError struct {
 	Message string `json:"message"` // Error message
 }
 
-const maxConcurrent = 50
+const maxConcurrent = 150
 
 // Error Response Data Structure
 type PlayErrorResponse struct {
@@ -210,8 +210,7 @@ func NewGoRoutineManager(goRoutineLimit int) *goRoutineManager {
 func IDS(startURL string, targetURL string) ([][]string, int32) {
 	resultPath := make([][]string, 0)
 	path := make([]string, 0)
-	// cache := make(map[string][]string)
-	// mu := sync.Mutex{}
+
 	depth := 1
 	gm := NewGoRoutineManager(maxConcurrent)
 	var totalTraversed int32 = 0
@@ -243,10 +242,7 @@ func IDS(startURL string, targetURL string) ([][]string, int32) {
 func DLS(startURL string, targetURL string, path []string, resultpath *[][]string, depth int, gm *goRoutineManager, totalTraversed *int32) {
 	atomic.AddInt32(totalTraversed, 1)
 	if startURL == targetURL {
-		// mu.Lock()
 		*resultpath = append(*resultpath, path)
-		// mu.Unlock()
-
 		return
 	}
 	if depth == 0 {
@@ -254,20 +250,7 @@ func DLS(startURL string, targetURL string, path []string, resultpath *[][]strin
 		return
 	}
 
-	// var links []string
-
-	// checks  := (*cache)[startURL] == nil
-
 	links := getAllInternalLinks(startURL)
-	// if (*cache)[startURL] == nil {
-	// 	mu.Lock()
-	// 	(*cache)[startURL] = links
-	// 	mu.Unlock()
-	// } else {
-	// 	mu.Lock()
-	// 	links = (*cache)[startURL]
-	// 	mu.Unlock()
-	// }
 
 	fmt.Println("current processed : ", startURL)
 
