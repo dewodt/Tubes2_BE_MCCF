@@ -105,10 +105,13 @@ func BFS(startURL string, targetURL string) ([][]string,[]string) {
 			continue
 		}
 		// fmt.Println(u,dist[u],"Target url: ",dist[targetURL])
+		
 		links := getAllInternalLinks(u)
+		//perform multithreding on this
 		for i := 0; i < len(links); i++ {
 			adj[u] = append(adj[u], links[i])
 		}
+		// perform multithreading on this
 		for _, v := range links {
 			if v != startURL && dist[v] == 0 {
 				dist[v] = maxInt
@@ -116,6 +119,7 @@ func BFS(startURL string, targetURL string) ([][]string,[]string) {
 		}
 		var isFirst bool 
 		isFirst = false
+		//perform multithreading on this
 		for i := 0; i < len(links); i++ {
 			if dist[adj[u][i]] > dist[u]+1 {
 				dist[adj[u][i]] = dist[u] + 1
@@ -141,7 +145,7 @@ func BFS(startURL string, targetURL string) ([][]string,[]string) {
 	paths := make([][]string, 0)
 	path := make([]string, 0)
 	paths = dfs(paths, path, parent, targetURL)
-
+	//perform multihtreading on this
 	for i:=0;i<len(paths);i++{
 		paths[i] = reverse(paths[i])
 	}
