@@ -29,8 +29,7 @@ func getWikipediaURLFromTitle(title string) (string, error) {
 	return res.Request.URL.String(), nil
 }
 
-
-func printResultpath(resultPath [][]string) {
+func PrintResultPath(resultPath [][]string) {
 	fmt.Println("Found", len(resultPath), "paths : ")
 	for i, path := range resultPath {
 		fmt.Print("Path ", i+1, " : ")
@@ -45,7 +44,6 @@ func getTitleFromURL(url string) string {
 	title = strings.ReplaceAll(title, "_", " ")
 	return title
 }
-
 
 func getArticlesFromResultPath(path [][]string) []models.Article {
 	//

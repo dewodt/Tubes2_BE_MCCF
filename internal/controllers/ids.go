@@ -6,9 +6,12 @@ import (
 	"sync/atomic"
 )
 
-const maxConcurrent = 100
+
+const maxConcurrent = 200
 
 var mu sync.Mutex
+var wg sync.WaitGroup
+
 
 func IDS(startURL string, targetURL string) ([][]string, int32) {
 	resultPath := make([][]string, 0)
@@ -16,15 +19,15 @@ func IDS(startURL string, targetURL string) ([][]string, int32) {
 	// cache := make(map[string][]string)
 	depth := 1
 	var totalTraversed int32 = 0
+	gm := NewGoRoutineManager(maxConcurrent)
 	for {
-		gm := NewGoRoutineManager(maxConcurrent)
 		// wg.Add(1)
 		DLS(startURL, targetURL, path, &resultPath, depth, gm, &totalTraversed)
 		// wg.Done()/
 		wg.Wait()
 		if len(resultPath) > 0 {
 			fmt.Println("found")
-			fmt.Println(len(resultPath))
+			// fmt.Println(len(resultPath))
 
 			for i := range resultPath {
 				resultPath[i] = append([]string{startURL}, resultPath[i]...)
@@ -61,7 +64,7 @@ func DLS(startURL string, targetURL string, path []string, resultpath *[][]strin
 	}
 
 	links := getAllInternalLinks(startURL)
-	
+
 	// // mu.Lock()
 	// // mu.lock()
 	// // checks := (*cache)[startURL] == nil
@@ -95,7 +98,7 @@ func DLS(startURL string, targetURL string, path []string, resultpath *[][]strin
 
 		// capture the link so each goroutine is unique
 		link := link
-		
+
 		gm.Run(func() {
 
 			DLS(link, targetURL, currpath, resultpath, depth-1, gm, totalTraversed)

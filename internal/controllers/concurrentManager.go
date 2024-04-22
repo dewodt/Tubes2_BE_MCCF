@@ -1,9 +1,5 @@
 package controllers
 
-import "sync"
-
-var wg sync.WaitGroup
-
 type goRoutineManager struct {
 	goRoutineCnt chan bool
 }
@@ -11,17 +7,17 @@ type goRoutineManager struct {
 // goRoutineManager to limit amount of concurrent running goRoutine
 
 func (g *goRoutineManager) Run(f func()) {
-	wg.Add(1)
 	select {
 	case g.goRoutineCnt <- true:
+		wg.Add(1)
 		go func() {
 			f()
 			<-g.goRoutineCnt
+			wg.Done()
 		}()
 	default:
 		f()
 	}
-	wg.Done()
 }
 
 func NewGoRoutineManager(goRoutineLimit int) *goRoutineManager {
