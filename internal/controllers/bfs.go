@@ -48,21 +48,26 @@ func (q *Queue) Peek() (string, error) {
 	return q.Elements[0], nil
 }
 
-func dfs(paths [][]string, path []string, parent map[string][]string, end string) {
+func dfs(paths *[][]string, path *[]string, parent map[string][]string, end string) {
 	if parent[end] == nil {
-		path = append(path, end)
-		paths = append(paths, path)
-		path = path[:len(path)-1]
+		// path = append(path, end)
+		*path = append(*path, end)
+		// paths = append(paths, path)
+		*paths = append(*paths, *path)
+		// path = path[:len(path)-1]
+		*path = (*path)[:len(*path)-1]
 	} else {
 		for i := 0; i < len(parent[end]); i++ {
-			path = append(path, end)
+			// path = append(path, end)
+			*path = append(*path, end)
 			dfs(paths, path, parent, parent[end][i])
-			path = path[:len(path)-1]
+			// path = path[:len(path)-1]
+			*path = (*path)[:len(*path)-1]
 		}
 	}
 }
 
-func BFS(startURL string, targetURL string) {
+func BFS(startURL string, targetURL string) ([][]string,[]string) {
 	fmt.Println("Solving with BFS")
 	fmt.Println("Start URL:", startURL)
 	fmt.Println("Target URL:", targetURL)
@@ -75,6 +80,7 @@ func BFS(startURL string, targetURL string) {
 	dist := make(map[string]int)
 	dist[startURL] = 0
 	dist[targetURL] = maxInt
+	q.Enqueue(startURL)
 	//making bfs tree
 	for !q.IsEmpty() {
 		u, err := q.Peek()
@@ -111,8 +117,8 @@ func BFS(startURL string, targetURL string) {
 	var paths [][]string
 	var path []string
 
-	dfs(paths, path, parent, targetURL)
-
+	dfs(&paths, &path, parent, targetURL)
+	return paths,path
 	//fill solution type with solution
 
 	// Placeholder
