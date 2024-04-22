@@ -47,24 +47,32 @@ func (q *Queue) Peek() (string, error) {
 	}
 	return q.Elements[0], nil
 }
-
-func dfs(paths *[][]string, path *[]string, parent map[string][]string, end string) {
+func reverse(arr []string) ([]string){
+	var ans []string
+	
+	for i:=len(arr)-1;i>=0;i--{
+		ans = append(ans, arr[i])
+	}
+	return ans
+}
+func dfs(paths [][]string, path []string, parent map[string][]string, end string)([][]string) {
 	if parent[end] == nil {
-		// path = append(path, end)
-		*path = append(*path, end)
-		// paths = append(paths, path)
-		*paths = append(*paths, *path)
-		// path = path[:len(path)-1]
-		*path = (*path)[:len(*path)-1]
+		path = append(path, end)
+		// *path = append(*path, end)
+		paths = append(paths, path)
+		// *paths = append(*paths, *path)
+		path = path[:len(path)-1]
+		// *path = (*path)[:len(*path)-1]
 	} else {
 		for i := 0; i < len(parent[end]); i++ {
-			// path = append(path, end)
-			*path = append(*path, end)
-			dfs(paths, path, parent, parent[end][i])
-			// path = path[:len(path)-1]
-			*path = (*path)[:len(*path)-1]
+			path = append(path, end)
+			// *path = append(*path, end)
+			paths = dfs(paths, path, parent, parent[end][i])
+			path = path[:len(path)-1]
+			// *path = (*path)[:len(*path)-1]
 		}
 	}
+	return paths
 }
 
 func BFS(startURL string, targetURL string) ([][]string,[]string) {
@@ -72,6 +80,9 @@ func BFS(startURL string, targetURL string) ([][]string,[]string) {
 	fmt.Println("Start URL:", startURL)
 	fmt.Println("Target URL:", targetURL)
 	// var adj [][]int
+	if(startURL==targetURL){
+		return [][]string{{startURL}}, []string{startURL}
+	}
 	maxInt := math.MaxInt32
 	adj := make(map[string][]string)
 	parent := make(map[string][]string)
@@ -83,16 +94,17 @@ func BFS(startURL string, targetURL string) ([][]string,[]string) {
 	q.Enqueue(startURL)
 	//making bfs tree
 	for !q.IsEmpty() {
-		
 		u, err := q.Peek()
-		fmt.Println(u,dist[u])
 		if err != nil {
 			fmt.Println("Queue is empty")
 		}
 		q.Dequeue()
+		fmt.Println(u,dist[u],"Target url: ",dist[targetURL])
 		if dist[u] >= dist[targetURL] {
+			// fmt.Println(u,dist[u],"skipped")
 			continue
 		}
+		// fmt.Println(u,dist[u],"Target url: ",dist[targetURL])
 		links := getAllInternalLinks(u)
 		for i := 0; i < len(links); i++ {
 			adj[u] = append(adj[u], links[i])
@@ -102,6 +114,8 @@ func BFS(startURL string, targetURL string) ([][]string,[]string) {
 				dist[v] = maxInt
 			}
 		}
+		var isFirst bool 
+		isFirst = false
 		for i := 0; i < len(links); i++ {
 			if dist[adj[u][i]] > dist[u]+1 {
 				dist[adj[u][i]] = dist[u] + 1
@@ -113,17 +127,25 @@ func BFS(startURL string, targetURL string) ([][]string,[]string) {
 				//parent[adj[u][i]].pushback
 				parent[adj[u][i]] = append(parent[adj[u][i]], u)
 			}
+			if(dist[targetURL]==1){
+				isFirst = true
+				break
+			}
+		}
+		if(isFirst){
+			break
 		}
 	}
-	fmt.Println(parent[targetURL],"debug")
+	// fmt.Println(parent[targetURL],"debug")
 	//change bfs tree to array of array of solution
-	var paths [][]string
-	var path []string
+	paths := make([][]string, 0)
+	path := make([]string, 0)
+	paths = dfs(paths, path, parent, targetURL)
 
-	dfs(&paths, &path, parent, targetURL)
+	for i:=0;i<len(paths);i++{
+		paths[i] = reverse(paths[i])
+	}
 	return paths,path
 	//fill solution type with solution
-
 	// Placeholder
-
 }
