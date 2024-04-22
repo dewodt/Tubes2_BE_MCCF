@@ -34,7 +34,7 @@ func BFStest(){
 	// startURL := "https://en.wikipedia.org/wiki/Humber_Cinemas"
 	// endURL := "https://en.wikipedia.org/wiki/Prince_Edward_Viaduct"
 
-		startURL := "https://en.wikipedia.org/wiki/Chicken"
+		startURL := "https://id.wikipedia.org/wiki/Indonesia"
 	endURL := "https://en.wikipedia.org/wiki/Joko_Widodo"
 
 	// startURL := "https://en.wikipedia.org/wiki/Prabowo_Subianto"

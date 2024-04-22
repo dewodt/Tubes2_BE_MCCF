@@ -76,14 +76,16 @@ func BFS(startURL string, targetURL string) ([][]string,[]string) {
 	adj := make(map[string][]string)
 	parent := make(map[string][]string)
 	parent[startURL] = nil
-	q := Queue{Size: 0}
+	q := Queue{Size: maxInt}
 	dist := make(map[string]int)
 	dist[startURL] = 0
 	dist[targetURL] = maxInt
 	q.Enqueue(startURL)
 	//making bfs tree
 	for !q.IsEmpty() {
+		
 		u, err := q.Peek()
+		fmt.Println(u,dist[u])
 		if err != nil {
 			fmt.Println("Queue is empty")
 		}
@@ -91,7 +93,7 @@ func BFS(startURL string, targetURL string) ([][]string,[]string) {
 		if dist[u] >= dist[targetURL] {
 			continue
 		}
-		links := getAllInternalLinks(startURL)
+		links := getAllInternalLinks(u)
 		for i := 0; i < len(links); i++ {
 			adj[u] = append(adj[u], links[i])
 		}
@@ -113,6 +115,7 @@ func BFS(startURL string, targetURL string) ([][]string,[]string) {
 			}
 		}
 	}
+	fmt.Println(parent[targetURL],"debug")
 	//change bfs tree to array of array of solution
 	var paths [][]string
 	var path []string
