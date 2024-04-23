@@ -15,6 +15,11 @@ func IDStest(){
 	// startURL := "https://en.wikipedia.org/wiki/Chicken"
 	// endURL := "https://en.wikipedia.org/wiki/Joko_Widodo"
 
+	// startURL := "https://en.wikipedia.org/wiki/New_car_smell"
+	// endURL := "https://en.wikipedia.org/wiki/Venus_flytrap"
+	// startURL := "https://en.wikipedia.org/wiki/Joko_Widodo"
+	// endURL := "https://en.wikipedia.org/wiki/Rengasdengklok_Incident"
+
 	// res := getAllInternalLinks(startURL)
 	// fmt.Println(res)
 	// results := getThumbnail(startURL)
@@ -57,5 +62,5 @@ func BFStest(){
 }
 
 func main() {
-	BFStest()
+	IDStest()
 }

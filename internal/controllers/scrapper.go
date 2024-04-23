@@ -1,6 +1,10 @@
 package controllers
 
-import "github.com/gocolly/colly/v2"
+import (
+	"strings"
+
+	"github.com/gocolly/colly/v2"
+)
 
 func getAllInternalLinks(url string) []string {
 	// Initialize result array
@@ -13,7 +17,7 @@ func getAllInternalLinks(url string) []string {
 	cl := colly.NewCollector()
 
 	// On HTML element a
-	cl.OnHTML("a[href]", func(e *colly.HTMLElement) {
+	cl.OnHTML("div#bodyContent a[href]", func(e *colly.HTMLElement) {
 		link := e.Attr("href")
 		// skip := false
 		// for _, ext := range ext {
@@ -23,7 +27,7 @@ func getAllInternalLinks(url string) []string {
 		// 	}
 		// }
 		// Check if the link is an internal link and correspond to a specific article
-		if len(link) > 6 && link[:6] == "/wiki/" {
+		if len(link) > 6 && link[:6] == "/wiki/" && !strings.HasPrefix(link, "/wiki/File:") {
 
 			fullLink := "https://en.wikipedia.org" + link
 
