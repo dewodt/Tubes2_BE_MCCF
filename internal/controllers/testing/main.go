@@ -31,11 +31,11 @@ func IDStest(){
 }
 
 func BFStest(){
-	startURL := "https://en.wikipedia.org/wiki/Prince_Edward_Viaduct"
-	endURL := "https://en.wikipedia.org/wiki/Humber_Cinemas"
+	// startURL := "https://en.wikipedia.org/wiki/Prince_Edward_Viaduct"
+	// endURL := "https://en.wikipedia.org/wiki/Humber_Cinemas"
 
-		// startURL := "https://en.wikipedia.org/wiki/Prabowo_Subianto"
-		// endURL := "https://en.wikipedia.org/wiki/Joko_Widodo"
+		startURL := "https://en.wikipedia.org/wiki/Prabowo_Subianto"
+		endURL := "https://en.wikipedia.org/wiki/Joko_Widodo"
 
 	// startURL := "https://en.wikipedia.org/wiki/Prabowo_Subianto"
 	// endURL := "https://en.wikipedia.org/wiki/Joko_Widodo"

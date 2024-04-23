@@ -94,50 +94,57 @@ func BFS(startURL string, targetURL string) ([][]string,[]string) {
 	q.Enqueue(startURL)
 	//making bfs tree
 	for !q.IsEmpty() {
-		u, err := q.Peek()
-		if err != nil {
-			fmt.Println("Queue is empty")
-		}
-		q.Dequeue()
-		fmt.Println(u,dist[u],"Target url: ",dist[targetURL])
-		if dist[u] >= dist[targetURL] {
-			// fmt.Println(u,dist[u],"skipped")
-			continue
-		}
+		// u, err := q.Peek()
+		// if err != nil {
+		// 	fmt.Println("Queue is empty")
+		// }
+		// q.Dequeue()
+
 		// fmt.Println(u,dist[u],"Target url: ",dist[targetURL])
+		// if dist[u] >= dist[targetURL] {
+		// 	// fmt.Println(u,dist[u],"skipped")
+		// 	continue
+		// }
 		
-		links := getAllInternalLinks(u)
-		//perform multithreding on this
-		for i := 0; i < len(links); i++ {
-			adj[u] = append(adj[u], links[i])
+		for i:=0;i<q.GetLength();i++{
+			adj[q.Elements[i]] = getAllInternalLinks(q.Elements[i])
 		}
+
 		// perform multithreading on this
-		for _, v := range links {
-			if v != startURL && dist[v] == 0 {
-				dist[v] = maxInt
+		for i:=0;i<q.GetLength();i++{	
+			u := q.Elements[i];
+			q.Dequeue()
+			for _, v := range adj[u] {
+				if v != startURL && dist[v] == 0 {
+					dist[v] = maxInt
+				}
 			}
-		}
-		var isFirst bool 
-		isFirst = false
-		//perform multithreading on this
-		for i := 0; i < len(links); i++ {
-			if dist[adj[u][i]] > dist[u]+1 {
-				dist[adj[u][i]] = dist[u] + 1
-				q.Enqueue(adj[u][i])
-				//parent[adj[u][i]].clear(),push_back
-				parent[adj[u][i]] = nil
-				parent[adj[u][i]] = append(parent[adj[u][i]], u)
-			} else if dist[adj[u][i]] == dist[u]+1 {
-				//parent[adj[u][i]].pushback
-				parent[adj[u][i]] = append(parent[adj[u][i]], u)
+			if(dist[u]>=dist[targetURL]){
+				continue
 			}
-			if(dist[targetURL]==1){
-				isFirst = true
+			var isFirst bool 
+			isFirst = false
+			fmt.Println(u,dist[u],"Target url: ",dist[targetURL])
+			//perform multithreading on this
+			for i := 0; i < len(adj[u]); i++ {
+				if dist[adj[u][i]] > dist[u]+1 {
+					dist[adj[u][i]] = dist[u] + 1
+					q.Enqueue(adj[u][i])
+					//parent[adj[u][i]].clear(),push_back
+					parent[adj[u][i]] = nil
+					parent[adj[u][i]] = append(parent[adj[u][i]], u)
+				} else if dist[adj[u][i]] == dist[u]+1 {
+					//parent[adj[u][i]].pushback
+					parent[adj[u][i]] = append(parent[adj[u][i]], u)
+				}
+				if(dist[targetURL]==1){
+					isFirst = true
+					break
+				}
+			}
+			if(isFirst){
 				break
 			}
-		}
-		if(isFirst){
-			break
 		}
 	}
 	// fmt.Println(parent[targetURL],"debug")
