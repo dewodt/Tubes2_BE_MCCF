@@ -107,28 +107,31 @@ func BFS(startURL string, targetURL string) ([][]string,[]string) {
 		// )
 		for i:=0;i<q.GetLength();i++{
 			if(dist[q.Elements[i]]<dist[targetURL]){
+			fmt.Println(q.Elements[i],dist[q.Elements[i]])
 			adj[q.Elements[i]] = getAllInternalLinks(q.Elements[i])
 			}
 		}
 
 		// perform multithreading on this
-		for i:=0;i<q.GetLength();i++{	
+		length := q.GetLength()
+		for i:=0;i<length;i++{	
 			u := q.Elements[i];
-			q.Dequeue()
+			
+			if(dist[u]>=dist[targetURL]){
+				continue
+			}
 			for _, v := range adj[u] {
 				if v != startURL && dist[v] == 0 {
 					dist[v] = maxInt
 				}
 			}
-			if(dist[u]>=dist[targetURL]){
-				continue
-			}
+			
 			var isFirst bool 
 			isFirst = false
 			
 			
 			for i := 0; i < len(adj[u]); i++ {
-				fmt.Println(adj[u][i],dist[adj[u][i]],"Target url: ",dist[targetURL])
+				
 				if dist[adj[u][i]] > dist[u]+1 {
 					dist[adj[u][i]] = dist[u] + 1
 					q.Enqueue(adj[u][i])
@@ -143,11 +146,14 @@ func BFS(startURL string, targetURL string) ([][]string,[]string) {
 					isFirst = true
 					break
 				}
+				fmt.Println(adj[u][i],dist[adj[u][i]],"Target url: ",dist[targetURL])
 			}
 			if(isFirst){
 				break
 			}
+			
 		}
+		q.Elements= q.Elements[length:]
 	}
 	// fmt.Println(parent[targetURL],"debug")
 	//change bfs tree to array of array of solution
