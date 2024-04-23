@@ -104,10 +104,11 @@ func BFS(startURL string, targetURL string) ([][]string,[]string) {
 		// if dist[u] >= dist[targetURL] {
 		// 	// fmt.Println(u,dist[u],"skipped")
 		// 	continue
-		// }
-		
+		// )
 		for i:=0;i<q.GetLength();i++{
+			if(dist[q.Elements[i]]<dist[targetURL]){
 			adj[q.Elements[i]] = getAllInternalLinks(q.Elements[i])
+			}
 		}
 
 		// perform multithreading on this
@@ -124,9 +125,10 @@ func BFS(startURL string, targetURL string) ([][]string,[]string) {
 			}
 			var isFirst bool 
 			isFirst = false
-			fmt.Println(u,dist[u],"Target url: ",dist[targetURL])
-			//perform multithreading on this
+			
+			
 			for i := 0; i < len(adj[u]); i++ {
+				fmt.Println(adj[u][i],dist[adj[u][i]],"Target url: ",dist[targetURL])
 				if dist[adj[u][i]] > dist[u]+1 {
 					dist[adj[u][i]] = dist[u] + 1
 					q.Enqueue(adj[u][i])
