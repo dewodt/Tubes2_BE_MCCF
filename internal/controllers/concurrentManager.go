@@ -20,6 +20,16 @@ func (g *goRoutineManager) Run(f func()) {
 	}
 }
 
+// func (g *goRoutineManager) Run(f func()) {
+// 	g.goRoutineCnt <- true
+// 	wg.Add(1)
+// 	go func() {
+// 		<-g.goRoutineCnt
+// 		f()
+// 		wg.Done()
+// 	}()
+// }
+
 func NewGoRoutineManager(goRoutineLimit int) *goRoutineManager {
 	return &goRoutineManager{
 		goRoutineCnt: make(chan bool, goRoutineLimit),

@@ -23,6 +23,9 @@ func IDS(startURL string, targetURL string) ([][]string, int32) {
 	gm := NewGoRoutineManager(maxConcurrent)
 	depth := 1
 	for {
+		fmt.Println("===============================================")
+		fmt.Println("depth : ", depth)
+		fmt.Println("==============================================")
 		// wg.Add(1)
 		DLS(startURL, targetURL, path, &resultPath, depth, gm, &totalTraversed)
 		// wg.Done()/
@@ -43,12 +46,12 @@ func IDS(startURL string, targetURL string) ([][]string, int32) {
 			break
 		}
 		depth++
+		totalTraversed = 0
 	}
 	return nil, 0
 
 }
 
-// var visited = make(map[string]bool)
 
 func DLS(startURL string, targetURL string, path []string, resultpath *[][]string, depth int, gm *goRoutineManager, totalTraversed *int32) {
 
@@ -67,24 +70,17 @@ func DLS(startURL string, targetURL string, path []string, resultpath *[][]strin
 		return
 	}
 
-	// links := getAllInternalLinks(startURL)
-
-	// mu.Lock()
-	// mu.lock()
-	// checks := (*cache)[startURL] == nil
-	// mu.Unlock()
-	// add links to cache
 	var links []string
 	if depth > 1 {
 		links = cache[startURL]
 	} else {
 		// check if startURL is in cache
-		mu.Lock()
-		_, ok := cache[startURL]
-		mu.Unlock()
-		if ok {
-			return
-		}
+		// mu.Lock()
+		// _, ok := cache[startURL]
+		// mu.Unlock()
+		// if ok {
+		// 	return
+		// }
 
 		links = getAllInternalLinks(startURL)
 		mu.Lock()
@@ -94,20 +90,12 @@ func DLS(startURL string, targetURL string, path []string, resultpath *[][]strin
 		mu.Unlock()
 	}
 
-	// if checks {
-	// 	mu.Lock()
-	// 	(*cache)[startURL] = links
-	// 	mu.Unlock()
-	// } else {
-	// 	// mu.Lock()
-	// 	links = (*cache)[startURL]
-	// 	// mu.Unlock()
-	// }
+
 
 	fmt.Println("current processed : ", startURL)
 
-	fmt.Println("depth : ", depth)
-	
+	// fmt.Println("depth : ", depth)
+
 	for _, link := range links {
 		currpath := append(path, link)
 
@@ -121,7 +109,7 @@ func DLS(startURL string, targetURL string, path []string, resultpath *[][]strin
 		})
 
 	}
-
+	// wg.Wait()
 	return
 
 }
