@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 	"tubes2-be-mccf/internal/models"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -42,7 +43,7 @@ func SolveIDS(startURL string, targetURL string) (PlaySuccessResponse, error) {
 	startTime := time.Now()
 	resultPath, totalTraversed := IDS(startURL, targetURL)
 
-	elapseTime := time.Since(startTime).Seconds() * 1000
+	elapseTime := time.Since(startTime).Seconds()
 
 	// Placeholder
 	if len(resultPath) == 0 {
