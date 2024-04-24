@@ -9,8 +9,8 @@ import (
 func IDStest(){
 	// startURL := "https://en.wikipedia.org/wiki/Umbraculidae"
 	// endURL := "https://en.wikipedia.org/wiki/Chicken"
-	startURL := "https://en.wikipedia.org/wiki/Humber_Cinemas"
-	endURL := "https://en.wikipedia.org/wiki/Prince_Edward_Viaduct"
+	startURL := "https://en.wikipedia.org/wiki/Inauguration_of_Joko_Widodo"
+	endURL := "https://en.wikipedia.org/wiki/Indonesia"
 
 	// startURL := "https://en.wikipedia.org/wiki/Chicken"
 	// endURL := "https://en.wikipedia.org/wiki/Joko_Widodo"
@@ -40,8 +40,11 @@ func BFStest(){
 	// endURL := "https://en.wikipedia.org/wiki/Humber_Cinemas"
 	// startURL := "https://en.wikipedia.org/wiki/Humber_Cinemas"
 	// endURL := "https://en.wikipedia.org/wiki/Prince_Edward_Viaduct"
-		startURL := "https://en.wikipedia.org/wiki/Prabowo_Subianto"
-		endURL := "https://en.wikipedia.org/wiki/Joko_Widodo"
+
+	startURL := "https://en.wikipedia.org/wiki/Inauguration_of_Joko_Widodo"
+	endURL := "https://en.wikipedia.org/wiki/Indonesia"
+		// startURL := "https://en.wikipedia.org/wiki/Prabowo_Subianto"
+		// endURL := "https://en.wikipedia.org/wiki/Joko_Widodo"
 
 	// startURL := "https://en.wikipedia.org/wiki/Prabowo_Subianto"
 	// endURL := "https://en.wikipedia.org/wiki/Joko_Widodo"
@@ -63,5 +66,5 @@ func BFStest(){
 }
 
 func main() {
-	IDStest()
+	BFStest()
 }

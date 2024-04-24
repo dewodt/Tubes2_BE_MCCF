@@ -42,7 +42,7 @@ func SolveIDS(startURL string, targetURL string) (PlaySuccessResponse, error) {
 	startTime := time.Now()
 	resultPath, totalTraversed := IDS(startURL, targetURL)
 
-	elapseTime := time.Since(startTime).Seconds() * 1000
+	elapseTime := time.Since(startTime).Seconds() 
 
 	// Placeholder
 	if len(resultPath) == 0 {
@@ -63,9 +63,25 @@ func solveBFS(startURL string, targetURL string) (PlaySuccessResponse, error) {
 	fmt.Println("Solving with BFS")
 	fmt.Println("Start URL:", startURL)
 	fmt.Println("Target URL:", targetURL)
-	// var adj [][]int
+	startTime:= time.Now()
+	resultPath,totalTraversed := BFS(startURL,targetURL)
 
-	return PlaySuccessResponse{}, nil
+	elapsedTime := time.Since(startTime).Seconds()
+
+	if len(resultPath)==0{
+		return PlaySuccessResponse{},nil
+	}else{
+		articles:=getArticlesFromResultPath(resultPath)
+		paths :=getPathsFromResultPath(resultPath,articles)
+		return PlaySuccessResponse{
+			TotalTraversed: int(totalTraversed),
+			ShortestPathLength: len(resultPath),
+			Duration: float32(elapsedTime),
+			Articles: articles,
+			Paths: paths,
+		},nil
+	}
+
 }
 
 func Solve(algorithm string, startURL string, targetURL string) (PlaySuccessResponse, error) {
