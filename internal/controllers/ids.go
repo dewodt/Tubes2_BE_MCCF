@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"sync"
 	"sync/atomic"
+	"tubes2-be-mccf/internal/utils"
 )
 
 const maxConcurrent = 200
@@ -52,7 +53,6 @@ func IDS(startURL string, targetURL string) ([][]string, int32) {
 
 }
 
-
 func DLS(startURL string, targetURL string, path []string, resultpath *[][]string, depth int, gm *goRoutineManager, totalTraversed *int32) {
 
 	atomic.AddInt32(totalTraversed, 1)
@@ -82,7 +82,7 @@ func DLS(startURL string, targetURL string, path []string, resultpath *[][]strin
 		// 	return
 		// }
 
-		links = getAllInternalLinks(startURL)
+		links = utils.GetAllInternalLinks(startURL)
 		mu.Lock()
 		cache[startURL] = links
 		// visited[startURL] = true
@@ -90,9 +90,7 @@ func DLS(startURL string, targetURL string, path []string, resultpath *[][]strin
 		mu.Unlock()
 	}
 
-
-
-	fmt.Println("current processed : ", startURL)
+	// fmt.Println("current processed : ", startURL)
 
 	// fmt.Println("depth : ", depth)
 
@@ -110,6 +108,5 @@ func DLS(startURL string, targetURL string, path []string, resultpath *[][]strin
 
 	}
 	// wg.Wait()
-	return
 
 }

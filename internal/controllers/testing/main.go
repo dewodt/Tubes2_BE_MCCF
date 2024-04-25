@@ -4,9 +4,10 @@ import (
 	"fmt"
 	"time"
 	"tubes2-be-mccf/internal/controllers"
+	"tubes2-be-mccf/internal/utils"
 )
 
-func IDStest(){
+func IDStest() {
 	// startURL := "https://en.wikipedia.org/wiki/Umbraculidae"
 	// endURL := "https://en.wikipedia.org/wiki/Chicken"
 	startURL := "https://en.wikipedia.org/wiki/Inauguration_of_Joko_Widodo"
@@ -30,12 +31,12 @@ func IDStest(){
 
 	// fmt.Println(results)
 	// print(results)
-	controllers.PrintResultPath(results)
+	utils.PrintResultPath(results)
 	fmt.Println("Elapsed Time: ", elapsedTime)
 	fmt.Println("Total Traversed: ", traversed)
 }
 
-func BFStest(){
+func BFStest() {
 	// startURL := "https://en.wikipedia.org/wiki/Prince_Edward_Viaduct"
 	// endURL := "https://en.wikipedia.org/wiki/Humber_Cinemas"
 	// startURL := "https://en.wikipedia.org/wiki/Humber_Cinemas"
@@ -43,8 +44,8 @@ func BFStest(){
 
 	startURL := "https://en.wikipedia.org/wiki/Inauguration_of_Joko_Widodo"
 	endURL := "https://en.wikipedia.org/wiki/Indonesia"
-		// startURL := "https://en.wikipedia.org/wiki/Prabowo_Subianto"
-		// endURL := "https://en.wikipedia.org/wiki/Joko_Widodo"
+	// startURL := "https://en.wikipedia.org/wiki/Prabowo_Subianto"
+	// endURL := "https://en.wikipedia.org/wiki/Joko_Widodo"
 
 	// startURL := "https://en.wikipedia.org/wiki/Prabowo_Subianto"
 	// endURL := "https://en.wikipedia.org/wiki/Joko_Widodo"
@@ -54,12 +55,12 @@ func BFStest(){
 	// results := getThumbnail(startURL)
 	startTime := time.Now()
 	// // fmt.Println(res)
-	results,path := controllers.BFS(startURL, endURL)
+	results, path := controllers.BFS(startURL, endURL)
 	elapsedTime := time.Since(startTime)
 
 	// fmt.Println(results)
 	// print(results)
-	controllers.PrintResultPath(results)
+	utils.PrintResultPath(results)
 	fmt.Println("Path: ", path)
 	fmt.Println("Elapsed Time: ", elapsedTime)
 	// fmt.Println("Total Traversed: ", traversed)

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 	"tubes2-be-mccf/internal/models"
+	"tubes2-be-mccf/internal/utils"
 
 	"github.com/gin-gonic/gin"
 )
@@ -40,17 +41,21 @@ func SolveIDS(startURL string, targetURL string) (PlaySuccessResponse, error) {
 	fmt.Println("Solving with IDS")
 	fmt.Println("Start URL:", startURL)
 	fmt.Println("Target URL:", targetURL)
+
+	// Start time
 	startTime := time.Now()
+
+	// Solve
 	resultPath, totalTraversed := IDS(startURL, targetURL)
 
+	// End time
 	elapseTime := time.Since(startTime).Seconds()
 
-	// Placeholder
+	// Return
 	if len(resultPath) == 0 {
 		return PlaySuccessResponse{}, nil
 	} else {
-		articles := getArticlesFromResultPath(resultPath)
-		paths := getPathsFromResultPath(resultPath, articles)
+		articles, paths := utils.GetArticlesAndPaths(resultPath)
 		return PlaySuccessResponse{
 			TotalTraversed:     int(totalTraversed),
 			ShortestPathLength: len(resultPath[0]),
@@ -64,27 +69,33 @@ func solveBFS(startURL string, targetURL string) (PlaySuccessResponse, error) {
 	fmt.Println("Solving with BFS")
 	fmt.Println("Start URL:", startURL)
 	fmt.Println("Target URL:", targetURL)
-	startTime:= time.Now()
-	resultPath,totalTraversed := BFS(startURL,targetURL)
 
+	// Start time
+	startTime := time.Now()
+
+	// Solve
+	resultPath, totalTraversed := BFS(startURL, targetURL)
+
+	// End time
 	elapsedTime := time.Since(startTime).Seconds()
 
-	if len(resultPath)==0{
-		return PlaySuccessResponse{},nil
-	}else{
-		articles:=getArticlesFromResultPath(resultPath)
-		paths :=getPathsFromResultPath(resultPath,articles)
+	// Return
+	if len(resultPath) == 0 {
+		return PlaySuccessResponse{}, nil
+	} else {
+		articles, paths := utils.GetArticlesAndPaths(resultPath)
 		return PlaySuccessResponse{
-			TotalTraversed: int(totalTraversed),
-			ShortestPathLength: len(resultPath),
-			Duration: float32(elapsedTime),
-			Articles: articles,
-			Paths: paths,
-		},nil
+			TotalTraversed:     int(totalTraversed),
+			ShortestPathLength: len(resultPath[0]),
+			Duration:           float32(elapsedTime),
+			Articles:           articles,
+			Paths:              paths,
+		}, nil
 	}
 
 }
 
+// Selector function IDS/BFS
 func Solve(algorithm string, startURL string, targetURL string) (PlaySuccessResponse, error) {
 	if algorithm == "IDS" {
 		return SolveIDS(startURL, targetURL)
@@ -93,6 +104,7 @@ func Solve(algorithm string, startURL string, targetURL string) (PlaySuccessResp
 	}
 }
 
+// Route handler for /play
 func PlayHandler(c *gin.Context) {
 	// Validate request data
 	var reqJSON PlayRequest
@@ -108,13 +120,13 @@ func PlayHandler(c *gin.Context) {
 	targetTitle := reqJSON.Target
 
 	// Get start wikipedia URL (and validate title)
-	startURL, err := getWikipediaURLFromTitle(startTitle)
+	startURL, err := utils.GetWikipediaURLFromTitle(startTitle)
 	if err != nil {
 		c.JSON(400, gin.H{"error": "Bad Request", "message": "Wikipedia start article not found", "errorFields": []FieldError{{"start", "Wikipedia start article not found"}}})
 		return
 	}
 	// Get target wikipedia URL (and validate title)
-	targetURL, err := getWikipediaURLFromTitle(targetTitle)
+	targetURL, err := utils.GetWikipediaURLFromTitle(targetTitle)
 	if err != nil {
 		c.JSON(400, gin.H{"error": "Bad Request", "message": "Wikipedia target article not found", "errorFields": []FieldError{{"target", "Wikipedia target article not found"}}})
 		return
@@ -127,10 +139,12 @@ func PlayHandler(c *gin.Context) {
 		return
 	}
 
-	// Return the result
-	c.JSON(200, result)
-	// print the json
-	// fmt.Println(result)
+	fmt.Println(result.Duration)
+	fmt.Println(result.TotalTraversed)
+	fmt.Println(result.ShortestPathLength)
 	fmt.Println(result.Articles)
 	fmt.Println(result.Paths)
+
+	// Return the result
+	c.JSON(200, result)
 }
