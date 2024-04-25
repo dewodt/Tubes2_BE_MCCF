@@ -46,7 +46,7 @@ func GetAllInternalLinks(url string) []string {
 		link := e.Attr("href")
 
 		// Check if the link is an internal link and correspond to a specific article
-		if len(link) > 6 && link[:6] == "/wiki/" && !strings.HasPrefix(link, "/wiki/File:") {
+		if len(link) > 6 && link[:6] == "/wiki/" && !strings.Contains(link, ":") {
 
 			fullLink := "https://en.wikipedia.org" + link
 
