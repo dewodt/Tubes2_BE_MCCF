@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"math"
-	
+	"tubes2-be-mccf/internal/utils"
 )
 
 type Queue struct {
@@ -60,7 +60,7 @@ func dfs(paths [][]string, path []string, parent map[string][]string, end string
 	if parent[end] == nil {
 		path = append(path, end)
 		// *path = append(*path, end)
-		
+
 		paths = append(paths, path)
 		// *paths = append(*paths, *path)
 		path = path[:len(path)-1]
@@ -83,12 +83,12 @@ func BFS(startURL string, targetURL string) ([][]string, int) {
 	fmt.Println("Target URL:", targetURL)
 	// runtime.GOMAXPROCS(runtime.NumCPU())
 	// var adj [][]int
-	traversed :=0
+	traversed := 0
 
 	if startURL == targetURL {
 		return [][]string{{startURL}}, 0
 	}
-	
+
 	gm := NewGoRoutineManager(300)
 	maxInt := math.MaxInt32
 	adj := make(map[string][]string)
@@ -99,7 +99,7 @@ func BFS(startURL string, targetURL string) ([][]string, int) {
 	dist[startURL] = 0
 	dist[targetURL] = maxInt
 	q.Enqueue(startURL)
-	
+
 	for !q.IsEmpty() {
 		for i := 0; i < q.GetLength(); i++ {
 			i := i
@@ -108,9 +108,9 @@ func BFS(startURL string, targetURL string) ([][]string, int) {
 				check := dist[q.Elements[i]] < dist[targetURL]
 				mu.Unlock()
 				if check {
-					
-					links := getAllInternalLinks(q.Elements[i])
-					
+
+					links := utils.GetAllInternalLinks(q.Elements[i])
+
 					mu.Lock()
 					adj[q.Elements[i]] = links
 					mu.Unlock()
@@ -152,18 +152,18 @@ func BFS(startURL string, targetURL string) ([][]string, int) {
 			}
 
 		}
-		
+
 		q.Elements = q.Elements[length:]
 	}
-	
+
 	paths := make([][]string, 0)
 	path := make([]string, 0)
-	
+
 	paths = dfs(paths, path, parent, targetURL)
-	
+
 	for i := 0; i < len(paths); i++ {
 		paths[i] = reverse(paths[i])
 	}
 	return paths, traversed
-	
+
 }
