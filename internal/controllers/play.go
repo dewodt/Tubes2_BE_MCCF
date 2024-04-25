@@ -139,11 +139,11 @@ func PlayHandler(c *gin.Context) {
 		return
 	}
 
-	fmt.Println(result.Duration)
-	fmt.Println(result.TotalTraversed)
-	fmt.Println(result.ShortestPathLength)
-	fmt.Println(result.Articles)
-	fmt.Println(result.Paths)
+	// fmt.Println(result.Duration)
+	// fmt.Println(result.TotalTraversed)
+	// fmt.Println(result.ShortestPathLength)
+	// fmt.Println(result.Articles)
+	// fmt.Println(result.Paths)
 
 	// Return the result
 	c.JSON(200, result)

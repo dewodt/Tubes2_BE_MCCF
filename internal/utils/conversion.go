@@ -1,7 +1,6 @@
 package utils
 
 import (
-	"fmt"
 	"tubes2-be-mccf/internal/models"
 )
 
@@ -16,8 +15,6 @@ func GetArticlesAndPaths(path [][]string) ([]models.Article, []models.Path) {
 
 	// Iterate over each path
 	for _, p := range path {
-		fmt.Println("Original Path: ")
-		fmt.Println(p) // Array of links
 		// Initialize pathRes
 		pathRes := make([]int, 0)
 

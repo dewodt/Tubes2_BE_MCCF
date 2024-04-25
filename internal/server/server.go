@@ -18,9 +18,9 @@ func InitServer() *http.Server {
 	server := &http.Server{
 		Addr:         fmt.Sprintf(":%d", port),
 		Handler:      RegisterRoutes(),
-		IdleTimeout:  time.Minute,
-		ReadTimeout:  10 * time.Second,
-		WriteTimeout: 30 * time.Second,
+		IdleTimeout:  1 * time.Hour,
+		ReadTimeout:  0 * time.Second, // 0 or negative = no timeout
+		WriteTimeout: 0 * time.Second, // 0 or negative = no timeout
 	}
 
 	return server
