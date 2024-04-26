@@ -89,7 +89,7 @@ func BFS(startURL string, targetURL string,isSingle bool) ([][]string, int) {
 		return [][]string{{startURL}}, 1
 	}
 
-	gm := NewGoRoutineManager(300)
+	gm := NewGoRoutineManager(100)
 	maxInt := math.MaxInt32
 	adj := make(map[string][]string)
 	parent := make(map[string][]string)

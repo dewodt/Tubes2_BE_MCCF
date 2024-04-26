@@ -38,7 +38,7 @@ type PlayErrorResponse struct {
 	ErrorFields []FieldError `json:"errorFields"` // List of fields that caused the error
 }
 
-func SolveIDS(startURL string, targetURL string) (PlaySuccessResponse, error) {
+func SolveIDS(startURL string, targetURL string,isSingle bool) (PlaySuccessResponse, error) {
 	fmt.Println("Solving with IDS")
 	fmt.Println("Start URL:", startURL)
 	fmt.Println("Target URL:", targetURL)
@@ -47,7 +47,7 @@ func SolveIDS(startURL string, targetURL string) (PlaySuccessResponse, error) {
 	startTime := time.Now()
 
 	// Solve
-	resultPath, totalTraversed := IDS(startURL, targetURL)
+	resultPath, totalTraversed := IDS(startURL, targetURL,isSingle)
 
 	// End time
 	elapseTime := time.Since(startTime).Seconds()
@@ -99,7 +99,7 @@ func solveBFS(startURL string, targetURL string, isSingle bool) (PlaySuccessResp
 // Selector function IDS/BFS
 func Solve(algorithm string, startURL string, targetURL string, isSingle bool) (PlaySuccessResponse, error) {
 	if algorithm == "IDS" {
-		return SolveIDS(startURL, targetURL)
+		return SolveIDS(startURL, targetURL,isSingle)
 	} else {
 		return solveBFS(startURL, targetURL, isSingle)
 	}

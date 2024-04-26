@@ -26,7 +26,7 @@ func IDStest() {
 	// results := getThumbnail(startURL)
 	startTime := time.Now()
 	// // fmt.Println(res)
-	results, traversed := controllers.IDS(startURL, endURL)
+	results, traversed := controllers.IDS(startURL, endURL,true)
 	elapsedTime := time.Since(startTime)
 
 	// fmt.Println(results)
@@ -39,8 +39,10 @@ func IDStest() {
 func BFStest() {
 	// startURL := "https://en.wikipedia.org/wiki/Prince_Edward_Viaduct"
 	// endURL := "https://en.wikipedia.org/wiki/Humber_Cinemas"
-	startURL := "https://en.wikipedia.org/wiki/Humber_Cinemas"
-	endURL := "https://en.wikipedia.org/wiki/Prince_Edward_Viaduct"
+	// startURL := "https://en.wikipedia.org/wiki/Humber_Cinemas"
+	// endURL := "https://en.wikipedia.org/wiki/Prince_Edward_Viaduct"
+	startURL := "https://en.wikipedia.org/wiki/United_States"
+	endURL := "https://en.wikipedia.org/wiki/KFC"
 
 	// startURL := "https://en.wikipedia.org/wiki/Inauguration_of_Joko_Widodo"
 	// endURL := "https://en.wikipedia.org/wiki/Indonesia"
@@ -55,7 +57,7 @@ func BFStest() {
 	// results := getThumbnail(startURL)
 	startTime := time.Now()
 	// // fmt.Println(res)
-	results, traversed := controllers.BFS(startURL, endURL,true)
+	results, traversed := controllers.BFS(startURL, endURL,false)
 	elapsedTime := time.Since(startTime)
 
 	// fmt.Println(results)
