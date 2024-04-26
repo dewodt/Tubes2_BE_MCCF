@@ -99,7 +99,7 @@ func BFSMulti(startURL string, targetURL string) ([][]string, int) {
 	}
 
 	cache := make(map[string][]string)
-	cache, err := readMapFromFile("./internal/controllers/cache/cache.json")
+	cache, err := readMapFromFile("./cache/cache.json")
 
 	// cache, err := readMapFromFile("../cache/cache.json")
 
@@ -192,7 +192,7 @@ func BFSMulti(startURL string, targetURL string) ([][]string, int) {
 	for i := 0; i < len(paths); i++ {
 		paths[i] = reverse(paths[i])
 	}
-	updateMapInFile(cache, "./internal/controllers/cache/cache.json")
+	updateMapInFile(cache, "./cache/cache.json")
 	// updateMapInFile(cache, "../cache/cache.json")
 	return paths, traversed
 
@@ -212,7 +212,7 @@ func BFSSingle(startURL string, targetURL string) ([][]string, int) {
 
 	cache := make(map[string][]string)
 	// cache, err := readMapFromFile("../cache/cache.json")
-	cache, err := readMapFromFile("./internal/controllers/cache/cache.json")
+	cache, err := readMapFromFile("./cache/cache.json")
 
 
 	if err != nil {
@@ -303,7 +303,7 @@ func BFSSingle(startURL string, targetURL string) ([][]string, int) {
 	for i := 0; i < len(paths); i++ {
 		paths[i] = reverse(paths[i])
 	}
-	updateMapInFile(cache, "./internal/controllers/cache/cache.json")
+	updateMapInFile(cache, "./cache/cache.json")
 	// updateMapInFile(cache, "../cache/cache.json")
 	paths = paths[:1]
 	return paths, traversed

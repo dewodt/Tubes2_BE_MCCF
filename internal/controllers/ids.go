@@ -25,7 +25,7 @@ func IDS(startURL string, targetURL string, isSingle bool) ([][]string, int32) {
 	path := make([]string, 0)
 	var totalTraversed int32 = 0
 	gm := NewGoRoutineManager(maxConcurrent)
-	cache, err := readMapFromFile("./internal/controllers/cache/cache.json")
+	cache, err := readMapFromFile("./cache/cache.json")
 	// cache, err := readMapFromFile("../cache/cache.json")
 
 	if err != nil {
@@ -53,7 +53,7 @@ func IDS(startURL string, targetURL string, isSingle bool) ([][]string, int32) {
 				resultPath[i] = append([]string{startURL}, resultPath[i]...)
 			}
 
-			updateMapInFile(cache, "./internal/controllers/cache/cache.json")
+			updateMapInFile(cache, "./cache/cache.json")
 			// updateMapInFile(cache, "../cache/cache.json")
 			return resultPath, totalTraversed
 		}
