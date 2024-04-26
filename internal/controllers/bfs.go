@@ -148,7 +148,7 @@ func BFS(startURL string, targetURL string,isSingle bool) ([][]string, int) {
 					isFirst = true
 					break
 				}
-				if dist[targetURL]!=maxInt{
+				if isSingle&&dist[targetURL]!=maxInt{
 					isFound = true
 					break
 				}
