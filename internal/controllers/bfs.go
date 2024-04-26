@@ -99,8 +99,12 @@ func BFS(startURL string, targetURL string,isSingle bool) ([][]string, int) {
 	dist[startURL] = 0
 	dist[targetURL] = maxInt
 	q.Enqueue(startURL)
-
+	var isFound bool
+	var isFirst bool
+	isFirst = false
+	isFound =false
 	for !q.IsEmpty() {
+		
 		for i := 0; i < q.GetLength(); i++ {
 			i := i
 			gm.Run(func() {
@@ -130,10 +134,10 @@ func BFS(startURL string, targetURL string,isSingle bool) ([][]string, int) {
 					dist[v] = maxInt
 				}
 			}
-			var isFirst bool
-			isFirst = false
-			isFound :=false
+			
+			
 			for i := 0; i < len(adj[u]); i++ {
+				fmt.Println(adj[u][i],"TargetURL: ", targetURL, "Apakah sama: ", targetURL==adj[u][i])
 				traversed++
 				if dist[adj[u][i]] > dist[u]+1 {
 					
@@ -141,14 +145,17 @@ func BFS(startURL string, targetURL string,isSingle bool) ([][]string, int) {
 					q.Enqueue(adj[u][i])
 					parent[adj[u][i]] = nil
 					parent[adj[u][i]] = append(parent[adj[u][i]], u)
+					
 				} else if dist[adj[u][i]] == dist[u]+1 {
+					if(!isSingle){
 					parent[adj[u][i]] = append(parent[adj[u][i]], u)
+					}
 				}
 				if dist[targetURL] == 1 {
 					isFirst = true
 					break
 				}
-				if isSingle&&dist[targetURL]!=maxInt{
+				if isSingle && dist[targetURL]!=maxInt{
 					isFound = true
 					break
 				}
@@ -156,10 +163,16 @@ func BFS(startURL string, targetURL string,isSingle bool) ([][]string, int) {
 			if isFirst {
 				break
 			}
-			if isFound &&isSingle{
+			if isFound &&isSingle {
 				break
 			}
 
+		}
+		if(isFirst){
+			break
+		}
+		if isFound &&isSingle{
+			break
 		}
 
 		q.Elements = q.Elements[length:]
