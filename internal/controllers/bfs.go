@@ -136,9 +136,9 @@ func BFSMulti(startURL string, targetURL string) ([][]string, int) {
 						cache[q.Elements[i]] = links
 						rwmu.Unlock()
 					} else {
-
+						rwmu.Lock()
 						adj[q.Elements[i]] = cacheCheck
-
+						rwmu.Unlock()
 					}
 					fmt.Println(q.Elements[i], "dist: ", dist[q.Elements[i]], "target URL: ", dist[targetURL])
 
@@ -250,7 +250,9 @@ func BFSSingle(startURL string, targetURL string) ([][]string, int) {
 						adj[q.Elements[i]] = links
 						rwmu.Unlock()
 					} else {
+						rwmu.Lock()
 						adj[q.Elements[i]] = cacheCheck
+						rwmu.Unlock()
 					}
 					fmt.Println(q.Elements[i], "dist: ", dist[q.Elements[i]], "target URL: ", dist[targetURL])
 
