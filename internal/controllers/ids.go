@@ -11,15 +11,15 @@ const maxConcurrent = 200
 
 // mutex so race condition doesnt happen
 
-
 // waitgroup so we can wait for all goroutine to finish before continuing to the next IDS iteration
 var wg sync.WaitGroup
 
 // targetfound used for single path IDS
+
 var targetFound int32 = 0
 
 func IDS(startURL string, targetURL string, isSingle bool) ([][]string, int32) {
-
+	targetFound = 0
 	resultPath := make([][]string, 0)
 	cache := make(map[string][]string)
 	path := make([]string, 0)
@@ -118,13 +118,14 @@ func DLS(startURL string, targetURL string, path []string, resultpath *[][]strin
 }
 
 func DLSSingle(startURL string, targetURL string, path []string, resultpath *[][]string, depth int, gm *goRoutineManager, totalTraversed *int32, cache *map[string][]string) {
+	// time.Sleep(500 * time.Millisecond)
 	if atomic.LoadInt32(&targetFound) != 0 {
 		return
 	}
 	atomic.AddInt32(totalTraversed, 1)
 	if startURL == targetURL {
-		atomic.StoreInt32(&targetFound, 1)
 		mu.Lock()
+		atomic.StoreInt32(&targetFound, 1)
 		*resultpath = append(*resultpath, path)
 		fmt.Println(targetFound)
 		mu.Unlock()
@@ -139,6 +140,7 @@ func DLSSingle(startURL string, targetURL string, path []string, resultpath *[][
 	if depth > 1 {
 
 		links = (*cache)[startURL]
+
 	} else {
 		rwmu.RLock()
 		check := (*cache)[startURL]
@@ -146,6 +148,7 @@ func DLSSingle(startURL string, targetURL string, path []string, resultpath *[][
 		if check == nil {
 
 			links = utils.GetAllInternalLinks(startURL)
+			fmt.Println("links : ")
 			rwmu.Lock()
 			(*cache)[startURL] = links
 			rwmu.Unlock()
