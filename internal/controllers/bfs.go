@@ -77,7 +77,7 @@ func dfs(paths [][]string, path []string, parent map[string][]string, end string
 	return paths
 }
 
-const maxConcurrentBFS = 200
+const maxConcurrentBFS = 450
 
 func BFS(startURL string, targetURL string, isSingle bool) ([][]string, int) {
 	if isSingle {
@@ -92,10 +92,10 @@ func BFSMulti(startURL string, targetURL string) ([][]string, int) {
 	fmt.Println("Start URL:", startURL)
 	fmt.Println("Target URL:", targetURL)
 
-	traversed := 0
+	traversed := 1
 
 	if startURL == targetURL {
-		return [][]string{{startURL}}, 0
+		return [][]string{{startURL}}, 1
 	}
 
 	cache := make(map[string][]string)
@@ -120,6 +120,8 @@ func BFSMulti(startURL string, targetURL string) ([][]string, int) {
 	q.Enqueue(startURL)
 
 	for !q.IsEmpty() {
+		var isFirst bool
+		isFirst = false
 		for i := 0; i < q.GetLength(); i++ {
 			i := i
 			gm.Run(func() {
@@ -158,8 +160,7 @@ func BFSMulti(startURL string, targetURL string) ([][]string, int) {
 					dist[v] = maxInt
 				}
 			}
-			var isFirst bool
-			isFirst = false
+			
 			for i := 0; i < len(adj[u]); i++ {
 
 				if dist[adj[u][i]] > dist[u]+1 {
@@ -179,6 +180,9 @@ func BFSMulti(startURL string, targetURL string) ([][]string, int) {
 				break
 			}
 
+		}
+		if(isFirst){
+			break
 		}
 
 		q.Elements = q.Elements[length:]
@@ -204,7 +208,7 @@ func BFSSingle(startURL string, targetURL string) ([][]string, int) {
 	fmt.Println("Target URL:", targetURL)
 	// runtime.GOMAXPROCS(runtime.NumCPU())
 	// var adj [][]int
-	traversed := 0
+	traversed := 1
 
 	if startURL == targetURL {
 		return [][]string{{startURL}}, 1
@@ -233,7 +237,7 @@ func BFSSingle(startURL string, targetURL string) ([][]string, int) {
 	q.Enqueue(startURL)
 	isFound := false
 	for !q.IsEmpty() {
-		length := min(q.GetLength(), maxConcurrentBFS)
+		length := min(q.GetLength(), 200)
 		for i := 0; i < length; i++ {
 			i := i
 			gm.Run(func() {
@@ -291,7 +295,9 @@ func BFSSingle(startURL string, targetURL string) ([][]string, int) {
 			}
 
 		}
-
+		if(isFound){
+			break
+		}
 		q.Elements = q.Elements[length:]
 	}
 
