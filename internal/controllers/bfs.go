@@ -77,7 +77,7 @@ func dfs(paths [][]string, path []string, parent map[string][]string, end string
 	return paths
 }
 
-func BFS(startURL string, targetURL string) ([][]string, int) {
+func BFS(startURL string, targetURL string,isSingle bool) ([][]string, int) {
 	fmt.Println("Solving with BFS")
 	fmt.Println("Start URL:", startURL)
 	fmt.Println("Target URL:", targetURL)
@@ -108,7 +108,7 @@ func BFS(startURL string, targetURL string) ([][]string, int) {
 				check := dist[q.Elements[i]] < dist[targetURL]
 				mu.Unlock()
 				if check {
-
+					// fmt.Println(q.Elements[i],"dist: ",dist[q.Elements[i]],"target URL: ", dist[targetURL])
 					links := utils.GetAllInternalLinks(q.Elements[i])
 
 					mu.Lock()
@@ -132,6 +132,7 @@ func BFS(startURL string, targetURL string) ([][]string, int) {
 			}
 			var isFirst bool
 			isFirst = false
+			isFound :=false
 			for i := 0; i < len(adj[u]); i++ {
 
 				if dist[adj[u][i]] > dist[u]+1 {
@@ -146,8 +147,15 @@ func BFS(startURL string, targetURL string) ([][]string, int) {
 					isFirst = true
 					break
 				}
+				if dist[targetURL]!=maxInt{
+					isFound = true
+					break
+				}
 			}
 			if isFirst {
+				break
+			}
+			if isFound &&isSingle{
 				break
 			}
 

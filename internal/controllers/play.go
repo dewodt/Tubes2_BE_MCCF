@@ -65,7 +65,7 @@ func SolveIDS(startURL string, targetURL string) (PlaySuccessResponse, error) {
 		}, nil
 	}
 }
-func solveBFS(startURL string, targetURL string) (PlaySuccessResponse, error) {
+func solveBFS(startURL string, targetURL string,isSingle bool) (PlaySuccessResponse, error) {
 	fmt.Println("Solving with BFS")
 	fmt.Println("Start URL:", startURL)
 	fmt.Println("Target URL:", targetURL)
@@ -74,7 +74,7 @@ func solveBFS(startURL string, targetURL string) (PlaySuccessResponse, error) {
 	startTime := time.Now()
 
 	// Solve
-	resultPath, totalTraversed := BFS(startURL, targetURL)
+	resultPath, totalTraversed := BFS(startURL, targetURL,isSingle)
 
 	// End time
 	elapsedTime := time.Since(startTime).Seconds()
@@ -96,11 +96,11 @@ func solveBFS(startURL string, targetURL string) (PlaySuccessResponse, error) {
 }
 
 // Selector function IDS/BFS
-func Solve(algorithm string, startURL string, targetURL string) (PlaySuccessResponse, error) {
+func Solve(algorithm string, startURL string, targetURL string,isSingle bool) (PlaySuccessResponse, error) {
 	if algorithm == "IDS" {
 		return SolveIDS(startURL, targetURL)
 	} else {
-		return solveBFS(startURL, targetURL)
+		return solveBFS(startURL, targetURL,isSingle)
 	}
 }
 
@@ -133,7 +133,7 @@ func PlayHandler(c *gin.Context) {
 	}
 
 	// Solve
-	result, err := Solve(algorithm, startURL, targetURL)
+	result, err := Solve(algorithm, startURL, targetURL,true)
 	if err != nil {
 		c.JSON(500, gin.H{"error": err.Error()})
 		return
