@@ -10,7 +10,7 @@ import (
 const maxConcurrent = 200
 
 // mutex so race condition doesnt happen
-var mu sync.RWMutex
+
 
 // waitgroup so we can wait for all goroutine to finish before continuing to the next IDS iteration
 var wg sync.WaitGroup
@@ -26,6 +26,8 @@ func IDS(startURL string, targetURL string, isSingle bool) ([][]string, int32) {
 	var totalTraversed int32 = 0
 	gm := NewGoRoutineManager(maxConcurrent)
 	cache, err := readMapFromFile("./internal/controllers/cache/cache.json")
+	// cache, err := readMapFromFile("../cache/cache.json")
+
 	if err != nil {
 		fmt.Println("error reading cache file")
 		cache = make(map[string][]string)
@@ -52,6 +54,7 @@ func IDS(startURL string, targetURL string, isSingle bool) ([][]string, int32) {
 			}
 
 			updateMapInFile(cache, "./internal/controllers/cache/cache.json")
+			// updateMapInFile(cache, "../cache/cache.json")
 			return resultPath, totalTraversed
 		}
 
@@ -83,15 +86,15 @@ func DLS(startURL string, targetURL string, path []string, resultpath *[][]strin
 	if depth > 1 {
 		links = (*cache)[startURL]
 	} else {
-		mu.RLock()
+		rwmu.RLock()
 		check := (*cache)[startURL]
-		mu.RUnlock()
+		rwmu.RUnlock()
 		if check == nil {
 
 			links = utils.GetAllInternalLinks(startURL)
-			mu.Lock()
+			rwmu.Lock()
 			(*cache)[startURL] = links
-			mu.Unlock()
+			rwmu.Unlock()
 		} else {
 			links = check
 		}
@@ -137,15 +140,15 @@ func DLSSingle(startURL string, targetURL string, path []string, resultpath *[][
 
 		links = (*cache)[startURL]
 	} else {
-		mu.RLock()
+		rwmu.RLock()
 		check := (*cache)[startURL]
-		mu.RUnlock()
+		rwmu.RUnlock()
 		if check == nil {
 
 			links = utils.GetAllInternalLinks(startURL)
-			mu.Lock()
+			rwmu.Lock()
 			(*cache)[startURL] = links
-			mu.Unlock()
+			rwmu.Unlock()
 		} else {
 			links = check
 		}

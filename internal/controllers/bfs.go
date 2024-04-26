@@ -77,19 +77,38 @@ func dfs(paths [][]string, path []string, parent map[string][]string, end string
 	return paths
 }
 
-func BFS(startURL string, targetURL string,isSingle bool) ([][]string, int) {
+const maxConcurrentBFS = 200
+
+func BFS(startURL string, targetURL string, isSingle bool) ([][]string, int) {
+	if isSingle {
+		return BFSSingle(startURL, targetURL)
+	} else {
+		return BFSMulti(startURL, targetURL)
+	}
+}
+
+func BFSMulti(startURL string, targetURL string) ([][]string, int) {
 	fmt.Println("Solving with BFS")
 	fmt.Println("Start URL:", startURL)
 	fmt.Println("Target URL:", targetURL)
-	// runtime.GOMAXPROCS(runtime.NumCPU())
-	// var adj [][]int
-	traversed := 1
+
+	traversed := 0
 
 	if startURL == targetURL {
-		return [][]string{{startURL}}, 1
+		return [][]string{{startURL}}, 0
 	}
 
-	gm := NewGoRoutineManager(100)
+	cache := make(map[string][]string)
+	cache, err := readMapFromFile("./internal/controllers/cache/cache.json")
+
+	// cache, err := readMapFromFile("../cache/cache.json")
+
+	if err != nil {
+		fmt.Println("error reading cache file")
+		cache = make(map[string][]string)
+	}
+
+	gm := NewGoRoutineManager(maxConcurrentBFS)
 	maxInt := math.MaxInt32
 	adj := make(map[string][]string)
 	parent := make(map[string][]string)
@@ -99,25 +118,30 @@ func BFS(startURL string, targetURL string,isSingle bool) ([][]string, int) {
 	dist[startURL] = 0
 	dist[targetURL] = maxInt
 	q.Enqueue(startURL)
-	var isFound bool
-	var isFirst bool
-	isFirst = false
-	isFound =false
+
 	for !q.IsEmpty() {
-		
 		for i := 0; i < q.GetLength(); i++ {
 			i := i
 			gm.Run(func() {
-				mu.Lock()
 				check := dist[q.Elements[i]] < dist[targetURL]
-				mu.Unlock()
+				// mu.Unlock()
 				if check {
-					// fmt.Println(q.Elements[i],"dist: ",dist[q.Elements[i]],"target URL: ", dist[targetURL])
-					links := utils.GetAllInternalLinks(q.Elements[i])
+					rwmu.RLock()
+					cacheCheck := cache[q.Elements[i]]
+					rwmu.RUnlock()
+					if cacheCheck == nil {
+						links := utils.GetAllInternalLinks(q.Elements[i])
+						rwmu.Lock()
+						adj[q.Elements[i]] = links
+						cache[q.Elements[i]] = links
+						rwmu.Unlock()
+					} else {
 
-					mu.Lock()
-					adj[q.Elements[i]] = links
-					mu.Unlock()
+						adj[q.Elements[i]] = cacheCheck
+
+					}
+					fmt.Println(q.Elements[i], "dist: ", dist[q.Elements[i]], "target URL: ", dist[targetURL])
+
 				}
 			})
 		}
@@ -125,7 +149,7 @@ func BFS(startURL string, targetURL string,isSingle bool) ([][]string, int) {
 		length := q.GetLength()
 		for i := 0; i < length; i++ {
 			u := q.Elements[i]
-			
+			traversed++
 			if dist[u] >= dist[targetURL] {
 				continue
 			}
@@ -134,45 +158,27 @@ func BFS(startURL string, targetURL string,isSingle bool) ([][]string, int) {
 					dist[v] = maxInt
 				}
 			}
-			
-			
+			var isFirst bool
+			isFirst = false
 			for i := 0; i < len(adj[u]); i++ {
-				fmt.Println(adj[u][i],"TargetURL: ", targetURL, "Apakah sama: ", targetURL==adj[u][i])
-				traversed++
+
 				if dist[adj[u][i]] > dist[u]+1 {
-					
 					dist[adj[u][i]] = dist[u] + 1
 					q.Enqueue(adj[u][i])
 					parent[adj[u][i]] = nil
 					parent[adj[u][i]] = append(parent[adj[u][i]], u)
-					
 				} else if dist[adj[u][i]] == dist[u]+1 {
-					if(!isSingle){
 					parent[adj[u][i]] = append(parent[adj[u][i]], u)
-					}
 				}
 				if dist[targetURL] == 1 {
 					isFirst = true
-					break
-				}
-				if isSingle && dist[targetURL]!=maxInt{
-					isFound = true
 					break
 				}
 			}
 			if isFirst {
 				break
 			}
-			if isFound &&isSingle {
-				break
-			}
 
-		}
-		if(isFirst){
-			break
-		}
-		if isFound &&isSingle{
-			break
 		}
 
 		q.Elements = q.Elements[length:]
@@ -186,6 +192,257 @@ func BFS(startURL string, targetURL string,isSingle bool) ([][]string, int) {
 	for i := 0; i < len(paths); i++ {
 		paths[i] = reverse(paths[i])
 	}
+	updateMapInFile(cache, "./internal/controllers/cache/cache.json")
+	// updateMapInFile(cache, "../cache/cache.json")
 	return paths, traversed
 
 }
+
+func BFSSingle(startURL string, targetURL string) ([][]string, int) {
+	fmt.Println("Solving with BFS")
+	fmt.Println("Start URL:", startURL)
+	fmt.Println("Target URL:", targetURL)
+	// runtime.GOMAXPROCS(runtime.NumCPU())
+	// var adj [][]int
+	traversed := 0
+
+	if startURL == targetURL {
+		return [][]string{{startURL}}, 1
+	}
+
+	cache := make(map[string][]string)
+	// cache, err := readMapFromFile("../cache/cache.json")
+	cache, err := readMapFromFile("./internal/controllers/cache/cache.json")
+
+
+	if err != nil {
+		fmt.Println("error reading cache file")
+		cache = make(map[string][]string)
+	}
+
+	gm := NewGoRoutineManager(maxConcurrentBFS)
+	maxInt := math.MaxInt32
+	adj := make(map[string][]string)
+	parent := make(map[string][]string)
+
+	parent[startURL] = nil
+	q := Queue{Size: maxInt}
+	dist := make(map[string]int)
+	dist[startURL] = 0
+	dist[targetURL] = maxInt
+	q.Enqueue(startURL)
+	isFound := false
+	for !q.IsEmpty() {
+		length := min(q.GetLength(), maxConcurrentBFS)
+		for i := 0; i < length; i++ {
+			i := i
+			gm.Run(func() {
+				check := dist[q.Elements[i]] < dist[targetURL]
+				// mu.Unlock()
+				if check {
+					rwmu.RLock()
+					cacheCheck := cache[q.Elements[i]]
+					rwmu.RUnlock()
+					if cacheCheck == nil {
+						links := utils.GetAllInternalLinks(q.Elements[i])
+						rwmu.Lock()
+						cache[q.Elements[i]] = links
+						adj[q.Elements[i]] = links
+						rwmu.Unlock()
+					} else {
+						adj[q.Elements[i]] = cacheCheck
+					}
+					fmt.Println(q.Elements[i], "dist: ", dist[q.Elements[i]], "target URL: ", dist[targetURL])
+
+				}
+			})
+		}
+		wg.Wait()
+		// length := q.GetLength()
+		for i := 0; i < length; i++ {
+			u := q.Elements[i]
+			if dist[u] >= dist[targetURL] {
+				continue
+			}
+			for _, v := range adj[u] {
+				if v != startURL && dist[v] == 0 {
+					dist[v] = maxInt
+				}
+			}
+			for i := 0; i < len(adj[u]); i++ {
+				traversed++
+
+				if dist[adj[u][i]] > dist[u]+1 {
+					dist[adj[u][i]] = dist[u] + 1
+					q.Enqueue(adj[u][i])
+					parent[adj[u][i]] = nil
+					parent[adj[u][i]] = append(parent[adj[u][i]], u)
+				}
+
+				if dist[targetURL] != maxInt {
+					isFound = true
+					break
+				}
+			}
+			if isFound {
+				break
+			}
+
+		}
+
+		q.Elements = q.Elements[length:]
+	}
+
+	paths := make([][]string, 0)
+	path := make([]string, 0)
+
+	paths = dfs(paths, path, parent, targetURL)
+
+	for i := 0; i < len(paths); i++ {
+		paths[i] = reverse(paths[i])
+	}
+	updateMapInFile(cache, "./internal/controllers/cache/cache.json")
+	// updateMapInFile(cache, "../cache/cache.json")
+	paths = paths[:1]
+	return paths, traversed
+
+}
+
+// func BFS(startURL string, targetURL string, isSingle bool) ([][]string, int) {
+// 	fmt.Println("Solving with BFS")
+// 	fmt.Println("Start URL:", startURL)
+// 	fmt.Println("Target URL:", targetURL)
+// 	// runtime.GOMAXPROCS(runtime.NumCPU())
+// 	// var adj [][]int
+// 	traversed := 1
+
+// 	if startURL == targetURL {
+// 		return [][]string{{startURL}}, 1
+// 	}
+// 	cache := make(map[string][]string)
+
+// 	// cache, err := readMapFromFile("./internal/controllers/cache/cache.json")
+// 	cache, err := readMapFromFile("../cache/cache.json")
+
+// 	if err != nil {
+// 		fmt.Println("error reading cache file")
+// 		cache = make(map[string][]string)
+// 	}
+
+// 	gm := NewGoRoutineManager(200)
+// 	maxInt := math.MaxInt32
+// 	adj := make(map[string][]string)
+// 	parent := make(map[string][]string)
+// 	parent[startURL] = nil
+// 	q := Queue{Size: maxInt}
+// 	dist := make(map[string]int)
+// 	dist[startURL] = 0
+// 	dist[targetURL] = maxInt
+// 	q.Enqueue(startURL)
+// 	var isFound bool
+// 	var isFirst bool
+// 	isFirst = false
+// 	isFound = false
+// 	for !q.IsEmpty() {
+// 		length := min(q.GetLength(),q.GetLength())
+// 		for i := 0; i < length; i++ {
+// 			i := i
+// 			gm.Run(func() {
+// 				// mu.Lock()
+// 				check := dist[q.Elements[i]] < dist[targetURL]
+// 				// mu.Unlock()
+// 				if check {
+// 					rwmu.RLock()
+// 					cacheCheck := cache[q.Elements[i]]
+// 					rwmu.RUnlock()
+// 					if cacheCheck == nil {
+// 						links := utils.GetAllInternalLinks(q.Elements[i])
+// 						rwmu.Lock()
+// 						adj[q.Elements[i]] = links
+// 						cache[q.Elements[i]] = links
+// 						rwmu.Unlock()
+// 					} else {
+// 						// rwmu.Lock()
+// 						// rwmu.Lock()
+// 						adj[q.Elements[i]] = cacheCheck
+// 						// rwmu.Unlock()
+
+// 						// mu.Unlock()
+// 					}
+// 					fmt.Println(q.Elements[i],"dist: ",dist[q.Elements[i]],"target URL: ", dist[targetURL])
+
+// 				}
+// 			})
+// 		}
+// 		wg.Wait()
+// 		// length := q.GetLength()
+// 		for i := 0; i < length; i++ {
+// 			u := q.Elements[i]
+
+// 			if dist[u] >= dist[targetURL] {
+// 				continue
+// 			}
+// 			for _, v := range adj[u] {
+// 				if v != startURL && dist[v] == 0 {
+// 					dist[v] = maxInt
+// 				}
+// 			}
+
+// 			for i := 0; i < len(adj[u]); i++ {
+// 				// fmt.Println(adj[u][i], "TargetURL: ", targetURL, "Apakah sama: ", targetURL == adj[u][i])
+// 				traversed++
+// 				if dist[adj[u][i]] > dist[u]+1 {
+
+// 					dist[adj[u][i]] = dist[u] + 1
+// 					q.Enqueue(adj[u][i])
+// 					parent[adj[u][i]] = nil
+// 					parent[adj[u][i]] = append(parent[adj[u][i]], u)
+
+// 				} else if dist[adj[u][i]] == dist[u]+1 {
+// 					if !isSingle {
+// 						parent[adj[u][i]] = append(parent[adj[u][i]], u)
+// 					}
+// 				}
+// 				if dist[targetURL] == 1 {
+// 					isFirst = true
+// 					break
+// 				}
+// 				if isSingle && dist[targetURL] != maxInt {
+// 					isFound = true
+// 					break
+// 				}
+// 			}
+// 			if isFirst {
+// 				break
+// 			}
+// 			if isFound && isSingle {
+// 				break
+// 			}
+
+// 		}
+// 		if isFirst {
+// 			break
+// 		}
+// 		if isFound && isSingle {
+// 			break
+// 		}
+
+// 		q.Elements = q.Elements[length:]
+// 		// wg.Wait()
+// 	}
+
+// 	paths := make([][]string, 0)
+// 	path := make([]string, 0)
+
+// 	paths = dfs(paths, path, parent, targetURL)
+
+// 	for i := 0; i < len(paths); i++ {
+// 		paths[i] = reverse(paths[i])
+// 	}
+
+// 	// updateMapInFile(cache, "./internal/controllers/cache/cache.json")
+// 	updateMapInFile(cache, "../cache/cache.json")
+
+// 	return paths, traversed
+
+// }

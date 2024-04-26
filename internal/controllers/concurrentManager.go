@@ -1,5 +1,10 @@
 package controllers
 
+import "sync"
+
+var mu sync.Mutex
+var rwmu sync.RWMutex
+
 type goRoutineManager struct {
 	goRoutineCnt chan bool
 }
