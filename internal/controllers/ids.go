@@ -59,9 +59,9 @@ func IDS(startURL string, targetURL string, isSingle bool) ([][]string, int32) {
 		}
 
 		path = path[:0]
-		if depth > 10 {
-			break
-		}
+		// if depth > 10 {
+		// 	break
+		// }
 		depth++
 		totalTraversed = 0
 	}
@@ -118,12 +118,12 @@ func DLS(startURL string, targetURL string, path []string, resultpath *[][]strin
 }
 
 func DLSSingle(startURL string, targetURL string, path []string, resultpath *[][]string, depth int, gm *goRoutineManager, totalTraversed *int32, cache *map[string][]string) {
-	if targetFound != 0 {
+	if atomic.LoadInt32(&targetFound) != 0 {
 		return
 	}
 	atomic.AddInt32(totalTraversed, 1)
 	if startURL == targetURL {
-		targetFound++
+		atomic.StoreInt32(&targetFound, 1)
 		mu.Lock()
 		*resultpath = append(*resultpath, path)
 		fmt.Println(targetFound)
