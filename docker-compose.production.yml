@@ -1,16 +1,27 @@
 version: "3.8"
 services:
+  cassandra:
+    image: cassandra:latest
+    container_name: cache-cassandra
+    ports:
+      - ${CASSANDRA_PORT}:${CASSANDRA_PORT}
+    volumes:
+      - ./cache-cassandra:/var/lib/cassandra
+
   backend:
     container_name: backend_production
     build:
       context: .
       target: runner
     ports:
-      - ${PORT}:${PORT}
-    # Important to bind/mount your codebase dir to /app dir for live reload
+      - ${APP_PORT}:${APP_PORT}
+    depends_on:
+      - cassandra
     volumes:
       - ./:/app
     environment:
-      - PORT=${PORT}
+      - APP_PORT=${APP_PORT}
       - APP_ENV=${APP_ENV}
       - FE_URL=${FE_URL}
+      - CASSANDRA_HOST=${CASSANDRA_HOST}
+      - CASSANDRA_PORT=${CASSANDRA_PORT}

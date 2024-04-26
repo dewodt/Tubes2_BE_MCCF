@@ -38,7 +38,7 @@ type PlayErrorResponse struct {
 	ErrorFields []FieldError `json:"errorFields"` // List of fields that caused the error
 }
 
-func SolveIDS(startURL string, targetURL string,isSingle bool) (PlaySuccessResponse, error) {
+func SolveIDS(startURL string, targetURL string, isSingle bool) (PlaySuccessResponse, error) {
 	fmt.Println("Solving with IDS")
 	fmt.Println("Start URL:", startURL)
 	fmt.Println("Target URL:", targetURL)
@@ -47,7 +47,7 @@ func SolveIDS(startURL string, targetURL string,isSingle bool) (PlaySuccessRespo
 	startTime := time.Now()
 
 	// Solve
-	resultPath, totalTraversed := IDS(startURL, targetURL,isSingle)
+	resultPath, totalTraversed := IDS(startURL, targetURL, isSingle)
 
 	// End time
 	elapseTime := time.Since(startTime).Seconds()
@@ -99,7 +99,7 @@ func solveBFS(startURL string, targetURL string, isSingle bool) (PlaySuccessResp
 // Selector function IDS/BFS
 func Solve(algorithm string, startURL string, targetURL string, isSingle bool) (PlaySuccessResponse, error) {
 	if algorithm == "IDS" {
-		return SolveIDS(startURL, targetURL,isSingle)
+		return SolveIDS(startURL, targetURL, isSingle)
 	} else {
 		return solveBFS(startURL, targetURL, isSingle)
 	}
@@ -138,6 +138,42 @@ func PlayHandler(c *gin.Context) {
 		c.JSON(400, gin.H{"error": "Bad Request", "message": "Wikipedia target article not found", "errorFields": []FieldError{{"target", "Wikipedia target article not found"}}})
 		return
 	}
+
+	fmt.Println("Validated Start URL:", startURL)
+	fmt.Println("Validated Target URL:", targetURL)
+
+	// TEST CASSANDRA DB
+	// KEY HARUS UNIK OBJECT (PRIMARY KEY)
+	// err = db.InsertURLs(map[string][]string{
+	// 	"https://en.wikipedia.org/wiki/Computer_science": {"https://en.wikipedia.org/wiki/Computer", "https://en.wikipedia.org/wiki/Science"},
+	// 	"https://en.wikipedia.org/wiki/Computer":         {"https://en.wikipedia.org/wiki/Computer_science"},
+	// 	"https://en.wikipedia.org/wiki/Science":          {"https://en.wikipedia.org/wiki/Computer_science", "https://en.wikipedia.org/wiki/Physics", "https://en.wikipedia.org/wiki/Chemistry"},
+	// })
+	// if err != nil {
+	// 	c.JSON(500, gin.H{"error": err.Error()})
+	// 	return
+	// }
+	// t1, err := db.FindURL("https://en.wikipedia.org/wiki/Computer_science")
+	// if err != nil {
+	// 	c.JSON(500, gin.H{"error": err.Error()})
+	// 	return
+	// }
+	// fmt.Println(t1)
+
+	// t1, err := db.FindURL(startURL)
+
+	// if err != nil {
+	// 	c.JSON(500, gin.H{"error": err.Error()})
+	// 	return
+	// }
+	// fmt.Println(t1)
+
+	// t2, err := db.FindURL(targetURL)
+	// if err != nil {
+	// 	c.JSON(500, gin.H{"error": err.Error()})
+	// 	return
+	// }
+	// fmt.Println(t2)
 
 	// Solve
 	result, err := Solve(algorithm, startURL, targetURL, isSinglePathSolution)

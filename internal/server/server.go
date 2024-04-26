@@ -12,7 +12,7 @@ import (
 
 func InitServer() *http.Server {
 	// Get port from environment
-	port, _ := strconv.Atoi(os.Getenv("PORT"))
+	port, _ := strconv.Atoi(os.Getenv("APP_PORT"))
 
 	// Declare Server config
 	server := &http.Server{
