@@ -83,10 +83,10 @@ func BFS(startURL string, targetURL string,isSingle bool) ([][]string, int) {
 	fmt.Println("Target URL:", targetURL)
 	// runtime.GOMAXPROCS(runtime.NumCPU())
 	// var adj [][]int
-	traversed := 0
+	traversed := 1
 
 	if startURL == targetURL {
-		return [][]string{{startURL}}, 0
+		return [][]string{{startURL}}, 1
 	}
 
 	gm := NewGoRoutineManager(300)
@@ -121,7 +121,7 @@ func BFS(startURL string, targetURL string,isSingle bool) ([][]string, int) {
 		length := q.GetLength()
 		for i := 0; i < length; i++ {
 			u := q.Elements[i]
-			traversed++
+			
 			if dist[u] >= dist[targetURL] {
 				continue
 			}
@@ -134,8 +134,9 @@ func BFS(startURL string, targetURL string,isSingle bool) ([][]string, int) {
 			isFirst = false
 			isFound :=false
 			for i := 0; i < len(adj[u]); i++ {
-
+				traversed++
 				if dist[adj[u][i]] > dist[u]+1 {
+					
 					dist[adj[u][i]] = dist[u] + 1
 					q.Enqueue(adj[u][i])
 					parent[adj[u][i]] = nil

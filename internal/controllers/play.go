@@ -140,7 +140,7 @@ func PlayHandler(c *gin.Context) {
 	}
 
 	// Solve
-	result, err := Solve(algorithm, startURL, targetURL, true)
+	result, err := Solve(algorithm, startURL, targetURL, isSinglePathSolution)
 	if err != nil {
 		c.JSON(500, gin.H{"error": err.Error()})
 		return
