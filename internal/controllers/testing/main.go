@@ -13,11 +13,11 @@ func IDStest() {
 	// startURL := "https://en.wikipedia.org/wiki/Inauguration_of_Joko_Widodo"
 	// endURL := "https://en.wikipedia.org/wiki/Indonesia"
 
-	startURL := "https://en.wikipedia.org/wiki/United_States"
-	endURL := "https://en.wikipedia.org/wiki/KFC"
+	// startURL := "https://en.wikipedia.org/wiki/United_States"
+	// endURL := "https://en.wikipedia.org/wiki/KFC"
 
-	// startURL := "https://en.wikipedia.org/wiki/New_car_smell"
-	// endURL := "https://en.wikipedia.org/wiki/Venus_flytrap"
+	startURL := "https://en.wikipedia.org/wiki/New_car_smell"
+	endURL := "https://en.wikipedia.org/wiki/Venus_flytrap"
 	// startURL := "https://en.wikipedia.org/wiki/Joko_Widodo"
 	// endURL := "https://en.wikipedia.org/wiki/Rengasdengklok_Incident"
 
@@ -26,7 +26,7 @@ func IDStest() {
 	// results := getThumbnail(startURL)
 	startTime := time.Now()
 	// // fmt.Println(res)
-	results, traversed := controllers.IDS(startURL, endURL,true)
+	results, traversed := controllers.IDS(startURL, endURL,false)
 	elapsedTime := time.Since(startTime)
 
 	// fmt.Println(results)
@@ -69,5 +69,5 @@ func BFStest() {
 }
 
 func main() {
-	BFStest()
+	IDStest()
 }

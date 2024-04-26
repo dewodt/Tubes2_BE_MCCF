@@ -10,9 +10,11 @@ import (
 const maxConcurrent = 200
 
 // mutex so race condition doesnt happen
-var mu sync.Mutex
+var mu sync.RWMutex
+
 // waitgroup so we can wait for all goroutine to finish before continuing to the next IDS iteration
 var wg sync.WaitGroup
+
 // targetfound used for single path IDS
 var targetFound int32 = 0
 
@@ -23,16 +25,21 @@ func IDS(startURL string, targetURL string, isSingle bool) ([][]string, int32) {
 	path := make([]string, 0)
 	var totalTraversed int32 = 0
 	gm := NewGoRoutineManager(maxConcurrent)
+	cache, err := readMapFromFile("./internal/controllers/cache/cache.json")
+	if err != nil {
+		fmt.Println("error reading cache file")
+		cache = make(map[string][]string)
+	}
 	depth := 1
 	for {
 		fmt.Println("===============================================")
 		fmt.Println("depth : ", depth)
 		fmt.Println("==============================================")
 		// wg.Add(1)
-		if(isSingle){
+		if isSingle {
 			DLSSingle(startURL, targetURL, path, &resultPath, depth, gm, &totalTraversed, &cache)
 
-		}else{
+		} else {
 			DLS(startURL, targetURL, path, &resultPath, depth, gm, &totalTraversed, &cache)
 		}
 
@@ -43,6 +50,8 @@ func IDS(startURL string, targetURL string, isSingle bool) ([][]string, int32) {
 			for i := range resultPath {
 				resultPath[i] = append([]string{startURL}, resultPath[i]...)
 			}
+
+			updateMapInFile(cache, "./internal/controllers/cache/cache.json")
 			return resultPath, totalTraversed
 		}
 
@@ -74,10 +83,19 @@ func DLS(startURL string, targetURL string, path []string, resultpath *[][]strin
 	if depth > 1 {
 		links = (*cache)[startURL]
 	} else {
-		links = utils.GetAllInternalLinks(startURL)
-		mu.Lock()
-		(*cache)[startURL] = links
-		mu.Unlock()
+		mu.RLock()
+		check := (*cache)[startURL]
+		mu.RUnlock()
+		if check == nil {
+
+			links = utils.GetAllInternalLinks(startURL)
+			mu.Lock()
+			(*cache)[startURL] = links
+			mu.Unlock()
+		} else {
+			links = check
+		}
+
 	}
 
 	fmt.Println("current processed : ", startURL)
@@ -93,10 +111,8 @@ func DLS(startURL string, targetURL string, path []string, resultpath *[][]strin
 
 		})
 	}
-	
+
 }
-
-
 
 func DLSSingle(startURL string, targetURL string, path []string, resultpath *[][]string, depth int, gm *goRoutineManager, totalTraversed *int32, cache *map[string][]string) {
 	if targetFound != 0 {
@@ -118,15 +134,22 @@ func DLSSingle(startURL string, targetURL string, path []string, resultpath *[][
 
 	var links []string
 	if depth > 1 {
-	
+
 		links = (*cache)[startURL]
 	} else {
-		links = utils.GetAllInternalLinks(startURL)
-		mu.Lock()
-		(*cache)[startURL] = links
+		mu.RLock()
+		check := (*cache)[startURL]
+		mu.RUnlock()
+		if check == nil {
 
+			links = utils.GetAllInternalLinks(startURL)
+			mu.Lock()
+			(*cache)[startURL] = links
+			mu.Unlock()
+		} else {
+			links = check
+		}
 
-		mu.Unlock()
 	}
 
 	fmt.Println("current processed : ", startURL)
