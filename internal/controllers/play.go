@@ -11,9 +11,10 @@ import (
 
 // Result Request Data Structure
 type PlayRequest struct {
-	Algorithm string `form:"algorithm" binding:"required,oneof='IDS' 'BFS'"` // Algorithm type (IDS or BFS)
-	Start     string `form:"start" binding:"required"`                       // Start wikipedia article title
-	Target    string `form:"target" binding:"required"`                      // Target wikipedia article title
+	Algorithm          string `form:"algorithm" binding:"required,oneof='IDS' 'BFS'"`                  // Algorithm type (IDS or BFS)
+	Start              string `form:"start" binding:"required"`                                        // Start wikipedia article title
+	Target             string `form:"target" binding:"required"`                                       // Target wikipedia article title
+	PathSolutionOption string `form:"pathSolutionOption" binding:"required,oneof='single' 'multiple'"` // Path option (shortest or all)
 }
 
 // Result Response Data Structure
@@ -65,7 +66,7 @@ func SolveIDS(startURL string, targetURL string) (PlaySuccessResponse, error) {
 		}, nil
 	}
 }
-func solveBFS(startURL string, targetURL string,isSingle bool) (PlaySuccessResponse, error) {
+func solveBFS(startURL string, targetURL string, isSingle bool) (PlaySuccessResponse, error) {
 	fmt.Println("Solving with BFS")
 	fmt.Println("Start URL:", startURL)
 	fmt.Println("Target URL:", targetURL)
@@ -74,7 +75,7 @@ func solveBFS(startURL string, targetURL string,isSingle bool) (PlaySuccessRespo
 	startTime := time.Now()
 
 	// Solve
-	resultPath, totalTraversed := BFS(startURL, targetURL,isSingle)
+	resultPath, totalTraversed := BFS(startURL, targetURL, isSingle)
 
 	// End time
 	elapsedTime := time.Since(startTime).Seconds()
@@ -96,11 +97,11 @@ func solveBFS(startURL string, targetURL string,isSingle bool) (PlaySuccessRespo
 }
 
 // Selector function IDS/BFS
-func Solve(algorithm string, startURL string, targetURL string,isSingle bool) (PlaySuccessResponse, error) {
+func Solve(algorithm string, startURL string, targetURL string, isSingle bool) (PlaySuccessResponse, error) {
 	if algorithm == "IDS" {
 		return SolveIDS(startURL, targetURL)
 	} else {
-		return solveBFS(startURL, targetURL,isSingle)
+		return solveBFS(startURL, targetURL, isSingle)
 	}
 }
 
@@ -118,6 +119,12 @@ func PlayHandler(c *gin.Context) {
 	algorithm := reqJSON.Algorithm
 	startTitle := reqJSON.Start
 	targetTitle := reqJSON.Target
+	isSinglePathSolution := reqJSON.PathSolutionOption == "single"
+
+	fmt.Println("Algorithm:", algorithm)
+	fmt.Println("Start:", startTitle)
+	fmt.Println("Target:", targetTitle)
+	fmt.Println("PathSolutionOption:", isSinglePathSolution)
 
 	// Get start wikipedia URL (and validate title)
 	startURL, err := utils.GetWikipediaURLFromTitle(startTitle)
@@ -133,7 +140,7 @@ func PlayHandler(c *gin.Context) {
 	}
 
 	// Solve
-	result, err := Solve(algorithm, startURL, targetURL,true)
+	result, err := Solve(algorithm, startURL, targetURL, true)
 	if err != nil {
 		c.JSON(500, gin.H{"error": err.Error()})
 		return
