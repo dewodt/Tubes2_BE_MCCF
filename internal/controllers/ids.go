@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"sync"
 	"sync/atomic"
+	"tubes2-be-mccf/internal/utils"
 )
 
 const maxConcurrent = 100
@@ -83,7 +84,7 @@ func DLS(startURL string, targetURL string, path []string, resultpath *[][]strin
 		// 	return
 		// }
 
-		links = getAllInternalLinks(startURL)
+		links = utils.GetAllInternalLinks(startURL)
 		mu.Lock()
 		(*cache)[startURL] = links
 		// visited[startURL] = true
@@ -247,6 +248,5 @@ func DLSSingle(startURL string, targetURL string, path []string, resultpath *[][
 
 	}
 	// wg.Wait()
-	return
 
 }

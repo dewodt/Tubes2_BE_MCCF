@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"math"
-	
+	"tubes2-be-mccf/internal/utils"
 )
 
 type Queue struct {
@@ -60,7 +60,7 @@ func dfs(paths [][]string, path []string, parent map[string][]string, end string
 	if parent[end] == nil {
 		path = append(path, end)
 		// *path = append(*path, end)
-		
+
 		paths = append(paths, path)
 		// *paths = append(*paths, *path)
 		path = path[:len(path)-1]
@@ -77,18 +77,18 @@ func dfs(paths [][]string, path []string, parent map[string][]string, end string
 	return paths
 }
 
-func BFS(startURL string, targetURL string) ([][]string, int) {
+func BFS(startURL string, targetURL string,isSingle bool) ([][]string, int) {
 	fmt.Println("Solving with BFS")
 	fmt.Println("Start URL:", startURL)
 	fmt.Println("Target URL:", targetURL)
 	// runtime.GOMAXPROCS(runtime.NumCPU())
 	// var adj [][]int
-	traversed :=0
+	traversed := 1
 
 	if startURL == targetURL {
-		return [][]string{{startURL}}, 0
+		return [][]string{{startURL}}, 1
 	}
-	
+
 	gm := NewGoRoutineManager(300)
 	maxInt := math.MaxInt32
 	adj := make(map[string][]string)
@@ -99,7 +99,7 @@ func BFS(startURL string, targetURL string) ([][]string, int) {
 	dist[startURL] = 0
 	dist[targetURL] = maxInt
 	q.Enqueue(startURL)
-	
+
 	for !q.IsEmpty() {
 		for i := 0; i < q.GetLength(); i++ {
 			i := i
@@ -108,9 +108,9 @@ func BFS(startURL string, targetURL string) ([][]string, int) {
 				check := dist[q.Elements[i]] < dist[targetURL]
 				mu.Unlock()
 				if check {
-					
-					links := getAllInternalLinks(q.Elements[i])
-					
+					// fmt.Println(q.Elements[i],"dist: ",dist[q.Elements[i]],"target URL: ", dist[targetURL])
+					links := utils.GetAllInternalLinks(q.Elements[i])
+
 					mu.Lock()
 					adj[q.Elements[i]] = links
 					mu.Unlock()
@@ -121,7 +121,7 @@ func BFS(startURL string, targetURL string) ([][]string, int) {
 		length := q.GetLength()
 		for i := 0; i < length; i++ {
 			u := q.Elements[i]
-			traversed++
+			
 			if dist[u] >= dist[targetURL] {
 				continue
 			}
@@ -132,9 +132,11 @@ func BFS(startURL string, targetURL string) ([][]string, int) {
 			}
 			var isFirst bool
 			isFirst = false
+			isFound :=false
 			for i := 0; i < len(adj[u]); i++ {
-
+				traversed++
 				if dist[adj[u][i]] > dist[u]+1 {
+					
 					dist[adj[u][i]] = dist[u] + 1
 					q.Enqueue(adj[u][i])
 					parent[adj[u][i]] = nil
@@ -146,24 +148,31 @@ func BFS(startURL string, targetURL string) ([][]string, int) {
 					isFirst = true
 					break
 				}
+				if dist[targetURL]!=maxInt{
+					isFound = true
+					break
+				}
 			}
 			if isFirst {
 				break
 			}
+			if isFound &&isSingle{
+				break
+			}
 
 		}
-		
+
 		q.Elements = q.Elements[length:]
 	}
-	
+
 	paths := make([][]string, 0)
 	path := make([]string, 0)
-	
+
 	paths = dfs(paths, path, parent, targetURL)
-	
+
 	for i := 0; i < len(paths); i++ {
 		paths[i] = reverse(paths[i])
 	}
 	return paths, traversed
-	
+
 }
