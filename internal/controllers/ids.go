@@ -96,7 +96,7 @@ func DLS(startURL string, targetURL string, path []string, resultpath *[][]strin
 
 	}
 
-	fmt.Println("current processed : ", startURL)
+	// fmt.Println("current processed : ", startURL)
 
 	for _, link := range links {
 		currpath := append(path, link)
@@ -143,7 +143,7 @@ func DLSSingle(startURL string, targetURL string, path []string, resultpath *[][
 		if check == nil {
 
 			links = utils.GetAllInternalLinks(startURL)
-			fmt.Println("links : ")
+			// fmt.Println("links : ")
 			rwmu.Lock()
 			(cache.Cache)[startURL] = links
 			rwmu.Unlock()
@@ -153,7 +153,7 @@ func DLSSingle(startURL string, targetURL string, path []string, resultpath *[][
 
 	}
 
-	fmt.Println("current processed : ", startURL)
+	// fmt.Println("current processed : ", startURL)
 
 	for _, link := range links {
 		currpath := append(path, link)
