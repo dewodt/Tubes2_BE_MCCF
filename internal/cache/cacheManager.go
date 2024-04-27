@@ -16,7 +16,7 @@ func InitCache() {
 
 	if err != nil {
 		fmt.Println("Error reading cache file")
-		// Cache = make(map[string][]string)
+		Cache = make(map[string][]string)
 		return
 	}
 	fmt.Println("Cache loaded")
