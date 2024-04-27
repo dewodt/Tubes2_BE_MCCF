@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"math"
+	"tubes2-be-mccf/internal/cache"
 	"tubes2-be-mccf/internal/utils"
 )
 
@@ -98,16 +99,6 @@ func BFSMulti(startURL string, targetURL string) ([][]string, int) {
 		return [][]string{{startURL}}, 1
 	}
 
-	cache := make(map[string][]string)
-	cache, err := readMapFromFile("./cache/cache.json")
-
-	// cache, err := readMapFromFile("../cache/cache.json")
-
-	if err != nil {
-		fmt.Println("error reading cache file")
-		cache = make(map[string][]string)
-	}
-
 	gm := NewGoRoutineManager(maxConcurrentBFS)
 	maxInt := math.MaxInt32
 	adj := make(map[string][]string)
@@ -126,16 +117,15 @@ func BFSMulti(startURL string, targetURL string) ([][]string, int) {
 			i := i
 			gm.Run(func() {
 				check := dist[q.Elements[i]] < dist[targetURL]
-				// mu.Unlock()
+
 				if check {
-					rwmu.RLock()
-					cacheCheck := cache[q.Elements[i]]
-					rwmu.RUnlock()
+					// rwmu.RLock()
+					cacheCheck := cache.Cache[q.Elements[i]]
+					// rwmu.RUnlock()
 					if cacheCheck == nil {
 						links := utils.GetAllInternalLinks(q.Elements[i])
 						rwmu.Lock()
 						adj[q.Elements[i]] = links
-						cache[q.Elements[i]] = links
 						rwmu.Unlock()
 					} else {
 						rwmu.Lock()
@@ -160,7 +150,7 @@ func BFSMulti(startURL string, targetURL string) ([][]string, int) {
 					dist[v] = maxInt
 				}
 			}
-			
+
 			for i := 0; i < len(adj[u]); i++ {
 
 				if dist[adj[u][i]] > dist[u]+1 {
@@ -181,7 +171,7 @@ func BFSMulti(startURL string, targetURL string) ([][]string, int) {
 			}
 
 		}
-		if(isFirst){
+		if isFirst {
 			break
 		}
 
@@ -196,7 +186,7 @@ func BFSMulti(startURL string, targetURL string) ([][]string, int) {
 	for i := 0; i < len(paths); i++ {
 		paths[i] = reverse(paths[i])
 	}
-	updateMapInFile(cache, "./cache/cache.json")
+	// cache.UpdateMapInFile("./cache/cache.json")
 	// updateMapInFile(cache, "../cache/cache.json")
 	return paths, traversed
 
@@ -214,15 +204,14 @@ func BFSSingle(startURL string, targetURL string) ([][]string, int) {
 		return [][]string{{startURL}}, 1
 	}
 
-	cache := make(map[string][]string)
-	// cache, err := readMapFromFile("../cache/cache.json")
-	cache, err := readMapFromFile("./cache/cache.json")
+	// cache := make(map[string][]string)
+	// // cache, err := readMapFromFile("../cache/cache.json")
+	// cache, err := readMapFromFile("./cache/cache.json")
 
-
-	if err != nil {
-		fmt.Println("error reading cache file")
-		cache = make(map[string][]string)
-	}
+	// if err != nil {
+	// 	fmt.Println("error reading cache file")
+	// 	cache = make(map[string][]string)
+	// }
 
 	gm := NewGoRoutineManager(maxConcurrentBFS)
 	maxInt := math.MaxInt32
@@ -244,13 +233,13 @@ func BFSSingle(startURL string, targetURL string) ([][]string, int) {
 				check := dist[q.Elements[i]] < dist[targetURL]
 				// mu.Unlock()
 				if check {
-					rwmu.RLock()
-					cacheCheck := cache[q.Elements[i]]
-					rwmu.RUnlock()
+					// rwmu.RLock()
+					cacheCheck := cache.Cache[q.Elements[i]]
+					// rwmu.RUnlock()
 					if cacheCheck == nil {
 						links := utils.GetAllInternalLinks(q.Elements[i])
 						rwmu.Lock()
-						cache[q.Elements[i]] = links
+						// cache.Cache[q.Elements[i]] = links
 						adj[q.Elements[i]] = links
 						rwmu.Unlock()
 					} else {
@@ -295,7 +284,7 @@ func BFSSingle(startURL string, targetURL string) ([][]string, int) {
 			}
 
 		}
-		if(isFound){
+		if isFound {
 			break
 		}
 		q.Elements = q.Elements[length:]
@@ -309,7 +298,7 @@ func BFSSingle(startURL string, targetURL string) ([][]string, int) {
 	for i := 0; i < len(paths); i++ {
 		paths[i] = reverse(paths[i])
 	}
-	updateMapInFile(cache, "./cache/cache.json")
+	// cache.UpdateMapInFile("./cache/cache.json")
 	// updateMapInFile(cache, "../cache/cache.json")
 	paths = paths[:1]
 	return paths, traversed
