@@ -1,26 +1,26 @@
 # Binaries for programs and plugins
-*.exe
-*.exe~
-*.dll
-*.so
-*.dylib
+/src/*.exe
+/src/*.exe~
+/src/*.dll
+/src/*.so
+/src/*.dylib
 
 # Test binary, built with "go test -c"
-*.test
+/src/*.test
 
 # Output of the go coverage tool, specifically when used with LiteIDE
-*.out
+/src/*.out
 
 # Dependency directories (remove the comment below to include it)
 # vendor/
 
 # Go workspace file
-go.work
-tmp/
+/src/go.work
+/src/tmp/
 
 # IDE specific files
-.vscode
-.idea
-./cache
+/src/.vscode
+/src/.idea
+/src/./cache
 
-cache
+/src/cache
