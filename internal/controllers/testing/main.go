@@ -16,8 +16,8 @@ func IDStest() {
 	// startURL := "https://en.wikipedia.org/wiki/United_States"
 	// endURL := "https://en.wikipedia.org/wiki/KFC"
 
-	startURL := "https://en.wikipedia.org/wiki/New_car_smell"
-	endURL := "https://en.wikipedia.org/wiki/Venus_flytrap"
+	startURL := "https://en.wikipedia.org/wiki/Chicken"
+	endURL := "https://en.wikipedia.org/wiki/Tesla_Cybertruck"
 	// startURL := "https://en.wikipedia.org/wiki/Joko_Widodo"
 	// endURL := "https://en.wikipedia.org/wiki/Rengasdengklok_Incident"
 
@@ -43,14 +43,17 @@ func BFStest() {
 	// endURL := "https://en.wikipedia.org/wiki/Prince_Edward_Viaduct"
 	// startURL := "https://en.wikipedia.org/wiki/United_States"
 	// endURL := "https://en.wikipedia.org/wiki/KFC"
-
+	// startURL := "https://en.wikipedia.org/wiki/New_car_smell"
+	// endURL := "https://en.wikipedia.org/wiki/Venus_flytrap"
+	startURL := "https://en.wikipedia.org/wiki/Elon_Musk"
+	endURL := "https://en.wikipedia.org/wiki/Tesla_Cybertruck"
 	// startURL := "https://en.wikipedia.org/wiki/Inauguration_of_Joko_Widodo"
 	// endURL := "https://en.wikipedia.org/wiki/Indonesia"
 	// startURL := "https://en.wikipedia.org/wiki/United_States"
 	// endURL := "https://en.wikipedia.org/wiki/KFC"
 
-	startURL := "https://en.wikipedia.org/wiki/Prabowo_Subianto"
-	endURL := "https://en.wikipedia.org/wiki/Joko_Widodo"
+	// startURL := "https://en.wikipedia.org/wiki/Prabowo_Subianto"
+	// endURL := "https://en.wikipedia.org/wiki/Joko_Widodo"
 
 	// res := getAllInternalLinks(startURL)
 	// fmt.Println(res)
@@ -69,5 +72,5 @@ func BFStest() {
 }
 
 func main() {
-	IDStest()
+	BFStest()
 }
